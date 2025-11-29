@@ -32,12 +32,22 @@ yarn-error.*
 
 # local env files
 .env*.local
+.env
 
 # typescript
 *.tsbuildinfo
 
-app-example
+# testing
+coverage/
+.nyc_output/
 
 # generated native folders
 /ios
 /android
+
+# build artifacts
+*.log
+*.lock
+!package-lock.json
+
+.vscode
