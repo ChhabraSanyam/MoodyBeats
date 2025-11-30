@@ -7,7 +7,7 @@ export interface AudioSource {
   type: 'local' | 'url';
   uri: string;
   metadata?: {
-    provider?: 'spotify' | 'youtube' | 'soundcloud' | 'direct';
+    provider?: 'direct';
   };
 }
 

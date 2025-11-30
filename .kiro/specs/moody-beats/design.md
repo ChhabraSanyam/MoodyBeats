@@ -97,7 +97,7 @@ interface AudioSource {
   type: 'local' | 'url';
   uri: string;
   metadata?: {
-    provider?: 'spotify' | 'youtube' | 'soundcloud' | 'direct';
+    provider?: 'direct';
   };
 }
 
@@ -362,8 +362,8 @@ mixtape.mixblues (ZIP archive)
 *For any* valid local audio file, when uploaded, the system should add it to the track pool with correct metadata.
 **Validates: Requirements 1.1**
 
-### Property 2: URL validation across providers
-*For any* URL from supported providers (Spotify, YouTube, SoundCloud, direct MP3), valid URLs should be accepted and invalid URLs should be rejected.
+### Property 2: URL validation for direct audio files
+*For any* direct audio file URL (MP3, AAC, WAV, M4A), valid URLs should be accepted and invalid URLs should be rejected.
 **Validates: Requirements 1.2**
 
 ### Property 3: Track visibility mode consistency
@@ -624,7 +624,7 @@ mixtape.mixblues (ZIP archive)
 
 #### 1. Audio Source Errors
 - **Invalid File Format**: Display user-friendly error when unsupported audio format is uploaded
-- **URL Validation Failure**: Show specific error for each provider (Spotify, YouTube, SoundCloud) when URL is malformed
+- **URL Validation Failure**: Show specific error when direct audio URL is malformed or unsupported
 - **Network Timeout**: Retry mechanism with exponential backoff for URL-based audio loading
 - **Audio Loading Failure**: Graceful degradation - skip track and continue playback
 

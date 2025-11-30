@@ -32,7 +32,7 @@ MoodyBeats is a cross-platform (iOS/Android/Web) React Native application that r
 #### Acceptance Criteria
 
 1. WHEN a user selects the file upload option, THE MoodyBeats System SHALL accept local audio files and add them to the track pool
-2. WHEN a user provides a URL from Spotify, YouTube, SoundCloud, or direct MP3 sources, THE MoodyBeats System SHALL validate and add the audio track to the track pool
+2. WHEN a user provides a direct audio file URL (MP3, AAC, WAV, M4A), THE MoodyBeats System SHALL validate and add the audio track to the track pool
 3. WHEN a track is added to the track pool, THE MoodyBeats System SHALL display the track name and metadata
 4. WHEN a track is in playback mode, THE MoodyBeats System SHALL hide all track names and metadata from the user interface
 5. WHEN a user attempts to add an invalid audio source, THE MoodyBeats System SHALL reject the input and display an error message

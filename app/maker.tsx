@@ -258,13 +258,8 @@ export default function MixtapeCreatorScreen() {
     
     const validation = validateAudioUrl(text.trim());
     
-    // On web, only accept direct audio URLs
-    if (Platform.OS === 'web') {
-      setIsUrlValid(validation.valid && validation.provider === 'direct');
-    } else {
-      // On native, accept all valid URLs
-      setIsUrlValid(validation.valid);
-    }
+    // Only accept direct audio URLs
+    setIsUrlValid(validation.valid && validation.provider === 'direct');
   };
 
   /**
@@ -282,22 +277,11 @@ export default function MixtapeCreatorScreen() {
 
     // Validate URL
     const validation = validateAudioUrl(urlInput.trim());
-    if (!validation.valid) {
+    if (!validation.valid || validation.provider !== 'direct') {
       // Requirements: 16.5 - Simple error message for URL validation failures
-      const errorMsg = validation.error || 'Unsupported audio source';
+      const errorMsg = validation.error || 'Only direct MP3/AAC/WAV/M4A URLs are supported';
       await triggerErrorHaptic();
       showToast(errorMsg, 'error');
-      return;
-    }
-
-    // On web, only direct audio URLs are supported (not Spotify/YouTube)
-    if (Platform.OS === 'web' && validation.provider !== 'direct') {
-      await triggerErrorHaptic();
-      showToast(
-        `${validation.provider?.toUpperCase()} URLs are not supported on web. Please use direct MP3/AAC/WAV URLs.`,
-        'error',
-        5000
-      );
       return;
     }
 
@@ -310,11 +294,10 @@ export default function MixtapeCreatorScreen() {
       },
     };
 
-    // Create track object with provider-based title
-    const providerName = validation.provider?.toUpperCase() || 'URL';
+    // Create track object
     const newTrack: Track = {
       id: `track-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      title: `${providerName} Track`,
+      title: 'Audio Track',
       duration: 0, // Will be determined during playback
       source: audioSource,
     };
@@ -590,7 +573,7 @@ export default function MixtapeCreatorScreen() {
           <View style={styles.modalContent} accessible={true}>
             <Text style={styles.modalTitle}>Add Track from URL</Text>
             <Text style={styles.modalSubtitle}>
-              Supported: Direct MP3/AAC/WAV URLs only
+              Supported: Direct MP3/AAC/WAV/M4A URLs only
             </Text>
             
             <TextInput

@@ -27,7 +27,7 @@ export interface MixtapeMetadata {
         type: 'local' | 'url';
         uri: string;
         metadata?: {
-          provider?: 'spotify' | 'youtube' | 'soundcloud' | 'direct';
+          provider?: 'direct';
         };
       };
     }[];
@@ -40,7 +40,7 @@ export interface MixtapeMetadata {
         type: 'local' | 'url';
         uri: string;
         metadata?: {
-          provider?: 'spotify' | 'youtube' | 'soundcloud' | 'direct';
+          provider?: 'direct';
         };
       };
     }[];

@@ -42,8 +42,8 @@
   - **Validates: Requirements 15.4**
 
 - [x] 3. Implement audio source validation and management
-  - Create audio file format validator (MP3, AAC, WAV)
-  - Implement URL validator for Spotify, YouTube, SoundCloud, and direct MP3 URLs
+  - Create audio file format validator (MP3, AAC, WAV, M4A)
+  - Implement URL validator for direct audio file URLs (MP3, AAC, WAV, M4A)
   - Create AudioRepository implementation for saving and retrieving audio files
   - Implement error handling for invalid audio sources
   - _Requirements: 1.1, 1.2, 1.5_

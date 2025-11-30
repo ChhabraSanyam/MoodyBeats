@@ -15,9 +15,6 @@ The audio validation module provides comprehensive validation for audio sources 
 
 ### Supported URL Providers
 
-- **Spotify**: Track, playlist, and album URLs
-- **YouTube**: Watch, short, and embed URLs
-- **SoundCloud**: Track and playlist URLs
 - **Direct**: Direct links to audio files (MP3, AAC, WAV, M4A)
 
 ### Usage Examples
@@ -28,14 +25,14 @@ The audio validation module provides comprehensive validation for audio sources 
 import { validateAudioSource, AudioValidationError } from './repositories';
 import { AudioSource } from './models';
 
-// Validate a Spotify URL
-const spotifySource: AudioSource = {
+// Validate a direct audio URL
+const urlSource: AudioSource = {
   type: 'url',
-  uri: 'https://open.spotify.com/track/123',
-  metadata: { provider: 'spotify' }
+  uri: 'https://example.com/audio.mp3',
+  metadata: { provider: 'direct' }
 };
 
-const result = validateAudioSource(spotifySource);
+const result = validateAudioSource(urlSource);
 if (result.valid) {
   console.log('Valid audio source!');
 } else {
@@ -84,12 +81,12 @@ console.log('Supported formats:', SUPPORTED_AUDIO_FORMATS);
 ```typescript
 import { detectUrlProvider, validateAudioUrl } from './repositories';
 
-const provider = detectUrlProvider('https://www.youtube.com/watch?v=abc123');
-console.log(provider); // 'youtube'
+const provider = detectUrlProvider('https://example.com/audio.mp3');
+console.log(provider); // 'direct'
 
-const urlResult = validateAudioUrl('https://open.spotify.com/track/123');
+const urlResult = validateAudioUrl('https://example.com/audio.mp3');
 console.log(urlResult.valid); // true
-console.log(urlResult.provider); // 'spotify'
+console.log(urlResult.provider); // 'direct'
 ```
 
 ### Error Handling

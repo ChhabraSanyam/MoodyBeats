@@ -58,25 +58,6 @@ describe('Audio Validation Utilities', () => {
   });
 
   describe('detectUrlProvider', () => {
-    it('should detect Spotify URLs', () => {
-      expect(detectUrlProvider('https://open.spotify.com/track/123')).toBe('spotify');
-      expect(detectUrlProvider('https://spotify.com/track/456')).toBe('spotify');
-      expect(detectUrlProvider('spotify:track:789')).toBe('spotify');
-      expect(detectUrlProvider('https://open.spotify.com/playlist/abc')).toBe('spotify');
-    });
-
-    it('should detect YouTube URLs', () => {
-      expect(detectUrlProvider('https://www.youtube.com/watch?v=abc123')).toBe('youtube');
-      expect(detectUrlProvider('https://youtu.be/xyz789')).toBe('youtube');
-      expect(detectUrlProvider('https://youtube.com/watch?v=test')).toBe('youtube');
-      expect(detectUrlProvider('https://www.youtube.com/embed/video123')).toBe('youtube');
-    });
-
-    it('should detect SoundCloud URLs', () => {
-      expect(detectUrlProvider('https://soundcloud.com/artist/track')).toBe('soundcloud');
-      expect(detectUrlProvider('https://www.soundcloud.com/user/song')).toBe('soundcloud');
-    });
-
     it('should detect direct audio file URLs', () => {
       expect(detectUrlProvider('https://example.com/audio.mp3')).toBe('direct');
       expect(detectUrlProvider('https://cdn.example.com/file.aac')).toBe('direct');
@@ -87,30 +68,33 @@ describe('Audio Validation Utilities', () => {
     it('should return null for unsupported URLs', () => {
       expect(detectUrlProvider('https://example.com/video.mp4')).toBeNull();
       expect(detectUrlProvider('https://unsupported.com/audio')).toBeNull();
+      expect(detectUrlProvider('https://open.spotify.com/track/123')).toBeNull();
+      expect(detectUrlProvider('https://www.youtube.com/watch?v=abc123')).toBeNull();
+      expect(detectUrlProvider('https://soundcloud.com/artist/track')).toBeNull();
     });
   });
 
   describe('validateAudioUrl', () => {
-    it('should validate Spotify URLs', () => {
-      const result = validateAudioUrl('https://open.spotify.com/track/123');
-      expect(result.valid).toBe(true);
-      expect(result.provider).toBe('spotify');
-    });
-
-    it('should validate YouTube URLs', () => {
-      const result = validateAudioUrl('https://www.youtube.com/watch?v=abc');
-      expect(result.valid).toBe(true);
-      expect(result.provider).toBe('youtube');
-    });
-
-    it('should validate SoundCloud URLs', () => {
-      const result = validateAudioUrl('https://soundcloud.com/artist/track');
-      expect(result.valid).toBe(true);
-      expect(result.provider).toBe('soundcloud');
-    });
-
     it('should validate direct MP3 URLs', () => {
       const result = validateAudioUrl('https://example.com/audio.mp3');
+      expect(result.valid).toBe(true);
+      expect(result.provider).toBe('direct');
+    });
+
+    it('should validate direct AAC URLs', () => {
+      const result = validateAudioUrl('https://example.com/audio.aac');
+      expect(result.valid).toBe(true);
+      expect(result.provider).toBe('direct');
+    });
+
+    it('should validate direct WAV URLs', () => {
+      const result = validateAudioUrl('https://example.com/audio.wav');
+      expect(result.valid).toBe(true);
+      expect(result.provider).toBe('direct');
+    });
+
+    it('should validate direct M4A URLs', () => {
+      const result = validateAudioUrl('https://example.com/audio.m4a');
       expect(result.valid).toBe(true);
       expect(result.provider).toBe('direct');
     });
@@ -124,7 +108,25 @@ describe('Audio Validation Utilities', () => {
     it('should reject unsupported providers', () => {
       const result = validateAudioUrl('https://unsupported.com/audio');
       expect(result.valid).toBe(false);
-      expect(result.error).toContain('Unsupported audio provider');
+      expect(result.error).toContain('Unsupported audio URL');
+    });
+
+    it('should reject Spotify URLs', () => {
+      const result = validateAudioUrl('https://open.spotify.com/track/123');
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('Unsupported audio URL');
+    });
+
+    it('should reject YouTube URLs', () => {
+      const result = validateAudioUrl('https://www.youtube.com/watch?v=abc');
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('Unsupported audio URL');
+    });
+
+    it('should reject SoundCloud URLs', () => {
+      const result = validateAudioUrl('https://soundcloud.com/artist/track');
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('Unsupported audio URL');
     });
   });
 
@@ -153,8 +155,8 @@ describe('Audio Validation Utilities', () => {
     it('should validate URL-based audio sources', () => {
       const source: AudioSource = {
         type: 'url',
-        uri: 'https://open.spotify.com/track/123',
-        metadata: { provider: 'spotify' },
+        uri: 'https://example.com/audio.mp3',
+        metadata: { provider: 'direct' },
       };
       const result = validateAudioSource(source);
       expect(result.valid).toBe(true);
@@ -197,24 +199,23 @@ describe('Audio Validation Utilities', () => {
       expect(result.error).toContain('Invalid audio source type');
     });
 
-    it('should detect provider mismatch', () => {
-      const source: AudioSource = {
-        type: 'url',
-        uri: 'https://open.spotify.com/track/123',
-        metadata: { provider: 'youtube' }, // Wrong provider
-      };
-      const result = validateAudioSource(source);
-      expect(result.valid).toBe(false);
-      expect(result.error).toContain('Provider mismatch');
-    });
-
     it('should accept sources without metadata provider', () => {
       const source: AudioSource = {
         type: 'url',
-        uri: 'https://open.spotify.com/track/123',
+        uri: 'https://example.com/audio.mp3',
       };
       const result = validateAudioSource(source);
       expect(result.valid).toBe(true);
+    });
+
+    it('should reject non-direct audio URLs', () => {
+      const source: AudioSource = {
+        type: 'url',
+        uri: 'https://open.spotify.com/track/123',
+      };
+      const result = validateAudioSource(source);
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('Unsupported audio URL');
     });
   });
 
@@ -222,7 +223,7 @@ describe('Audio Validation Utilities', () => {
     it('should not throw for valid audio sources', () => {
       const source: AudioSource = {
         type: 'url',
-        uri: 'https://open.spotify.com/track/123',
+        uri: 'https://example.com/audio.mp3',
       };
       expect(() => assertValidAudioSource(source)).not.toThrow();
     });

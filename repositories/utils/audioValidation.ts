@@ -54,17 +54,6 @@ function isValidUrl(urlString: string): boolean {
  * Requirements: 1.2
  */
 const URL_PROVIDER_PATTERNS = {
-  spotify: [
-    /^https?:\/\/(open\.)?spotify\.com\/(track|playlist|album)\//,
-    /^spotify:(track|playlist|album):/,
-  ],
-  youtube: [
-    /^https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)/,
-    /^https?:\/\/(www\.)?youtube\.com\/(embed|v)\//,
-  ],
-  soundcloud: [
-    /^https?:\/\/(www\.)?soundcloud\.com\//,
-  ],
   direct: [
     /\.mp3(\?.*)?$/i,
     /\.aac(\?.*)?$/i,
@@ -79,10 +68,10 @@ const URL_PROVIDER_PATTERNS = {
  */
 export function detectUrlProvider(
   url: string
-): 'spotify' | 'youtube' | 'soundcloud' | 'direct' | null {
+): 'direct' | null {
   for (const [provider, patterns] of Object.entries(URL_PROVIDER_PATTERNS)) {
     if (patterns.some((pattern) => pattern.test(url))) {
-      return provider as 'spotify' | 'youtube' | 'soundcloud' | 'direct';
+      return provider as 'direct';
     }
   }
   return null;
@@ -94,7 +83,7 @@ export function detectUrlProvider(
  */
 export function validateAudioUrl(url: string): {
   valid: boolean;
-  provider?: 'spotify' | 'youtube' | 'soundcloud' | 'direct';
+  provider?: 'direct';
   error?: string;
 } {
   // Check if it's a valid URL format
@@ -110,7 +99,7 @@ export function validateAudioUrl(url: string): {
   if (!provider) {
     return {
       valid: false,
-      error: 'Unsupported audio provider. Supported: Spotify, YouTube, SoundCloud, or direct MP3/AAC/WAV/M4A URLs',
+      error: 'Unsupported audio URL. Only direct MP3/AAC/WAV/M4A URLs are supported',
     };
   }
 

@@ -21,12 +21,12 @@ describe('Mixtape Models', () => {
         type: 'url',
         uri: 'https://example.com/audio.mp3',
         metadata: {
-          provider: 'spotify',
+          provider: 'direct',
         },
       };
       
       expect(source.type).toBe('url');
-      expect(source.metadata?.provider).toBe('spotify');
+      expect(source.metadata?.provider).toBe('direct');
     });
   });
 
