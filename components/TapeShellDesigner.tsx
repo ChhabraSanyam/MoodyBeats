@@ -146,6 +146,114 @@ function HoverableButton({ onPress, style, textStyle, children, glowColor = '#d4
   );
 }
 
+// Heart Shape Component for Android (replaces emoji hearts)
+interface HeartShapeProps {
+  color: string;
+  size: number;
+  top: number;
+  left: number;
+}
+
+// Flower Component for Android (6-petal design)
+interface FlowerProps {
+  petalColor: string;
+  centerColor: string;
+  size: number;
+  top: number;
+  left?: number;
+  right?: number;
+}
+
+function Flower({ petalColor, centerColor, size, top, left, right }: FlowerProps) {
+  const petalSize = size * 0.4;
+  const centerSize = size * 0.5;
+  const radius = size * 0.36;
+  
+  return (
+    <View style={{ position: 'absolute', top, left, right, width: size, height: size }}>
+      {/* 6 petals arranged in a circle */}
+      {[0, 60, 120, 180, 240, 300].map((angle, i) => {
+        const radian = (angle * Math.PI) / 180;
+        const x = size / 2 + radius * Math.cos(radian) - petalSize / 2;
+        const y = size / 2 + radius * Math.sin(radian) - petalSize / 2;
+        return (
+          <View
+            key={i}
+            style={{
+              position: 'absolute',
+              top: y,
+              left: x,
+              width: petalSize,
+              height: petalSize,
+              borderRadius: petalSize / 2,
+              backgroundColor: petalColor,
+            }}
+          />
+        );
+      })}
+      {/* Center */}
+      <View
+        style={{
+          position: 'absolute',
+          top: (size - centerSize) / 2,
+          left: (size - centerSize) / 2,
+          width: centerSize,
+          height: centerSize,
+          borderRadius: centerSize / 2,
+          backgroundColor: centerColor,
+        }}
+      />
+    </View>
+  );
+}
+
+function HeartShape({ color, size, top, left }: HeartShapeProps) {
+  // Render heart shape using View components instead of emoji
+  const heartWidth = size * 2;
+  const heartHeight = size * 1.8;
+  
+  return (
+    <View style={{ position: 'absolute', top, left, width: heartWidth, height: heartHeight }}>
+      {/* Left circle */}
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: color,
+        }}
+      />
+      {/* Right circle */}
+      <View
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: size,
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: color,
+        }}
+      />
+      {/* Bottom triangle (using rotated square) - positioned to form heart point */}
+      <View
+        style={{
+          position: 'absolute',
+          top: size * 0.5,
+          left: size * 0.5,
+          width: size * 1,
+          height: size * 1,
+          backgroundColor: color,
+          transform: [{ rotate: '45deg' }],
+        }}
+      />
+    </View>
+  );
+}
+
 interface TapeShellDesignerProps {
   theme: TapeTheme;
   onThemeChange: (theme: TapeTheme) => void;
@@ -240,16 +348,17 @@ export default function TapeShellDesigner({
             selectedPreset === 'love' && Platform.OS === 'web' && {
               backgroundColor: '#F5F5DC',
               backgroundImage: `
-                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 300'%3E%3Cg%3E%3C!-- Top left (red) --%3E%3Cpath fill='%238B0000' d='M 60 38 C 60 30 56 26 50 26 C 44 26 40 30 40 38 C 40 30 36 26 30 26 C 24 26 20 30 20 38 C 20 49 40 61 40 61 C 40 61 60 49 60 38 Z'/%3E%3C!-- Top center left (pink) --%3E%3Cpath fill='%23FF69B4' d='M 152 28 C 152 22 149 19 144 19 C 139 19 136 22 136 28 C 136 22 133 19 128 19 C 123 19 120 22 120 28 C 120 37 136 47 136 47 C 136 47 152 37 152 28 Z'/%3E%3C!-- Top center (red) --%3E%3Cpath fill='%238B0000' d='M 252 23 C 252 17 249 14 244 14 C 239 14 236 17 236 23 C 236 17 233 14 228 14 C 223 14 220 17 220 23 C 220 32 236 42 236 42 C 236 42 252 32 252 23 Z'/%3E%3C!-- Top center right (pink) --%3E%3Cpath fill='%23FF69B4' d='M 348 28 C 348 22 345 19 340 19 C 335 19 332 22 332 28 C 332 22 329 19 324 19 C 319 19 316 22 316 28 C 316 37 332 47 332 47 C 332 47 348 37 348 28 Z'/%3E%3C!-- Top right (red) --%3E%3Cpath fill='%238B0000' d='M 460 38 C 460 30 456 26 450 26 C 444 26 440 30 440 38 C 440 30 436 26 430 26 C 424 26 420 30 420 38 C 420 49 440 61 440 61 C 440 61 460 49 460 38 Z'/%3E%3C!-- Left side top (red) --%3E%3Cpath fill='%238B0000' d='M 52 88 C 52 81 49 78 44 78 C 39 78 36 81 36 88 C 36 81 33 78 28 78 C 23 78 20 81 20 88 C 20 98 36 108 36 108 C 36 108 52 98 52 88 Z'/%3E%3C!-- Left side middle (pink) --%3E%3Cpath fill='%23FF69B4' d='M 52 148 C 52 141 49 138 44 138 C 39 138 36 141 36 148 C 36 141 33 138 28 138 C 23 138 20 141 20 148 C 20 158 36 168 36 168 C 36 168 52 158 52 148 Z'/%3E%3C!-- Left side bottom (red) --%3E%3Cpath fill='%238B0000' d='M 52 208 C 52 201 49 198 44 198 C 39 198 36 201 36 208 C 36 201 33 198 28 198 C 23 198 20 201 20 208 C 20 218 36 228 36 228 C 36 228 52 218 52 208 Z'/%3E%3C!-- Right side top (pink) --%3E%3Cpath fill='%23FF69B4' d='M 460 88 C 460 81 457 78 452 78 C 447 78 444 81 444 88 C 444 81 441 78 436 78 C 431 78 428 81 428 88 C 428 98 444 108 444 108 C 444 108 460 98 460 88 Z'/%3E%3C!-- Right side middle (red) --%3E%3Cpath fill='%238B0000' d='M 460 148 C 460 141 457 138 452 138 C 447 138 444 141 444 148 C 444 141 441 138 436 138 C 431 138 428 141 428 148 C 428 158 444 168 444 168 C 444 168 460 158 460 148 Z'/%3E%3C!-- Right side bottom (pink) --%3E%3Cpath fill='%23FF69B4' d='M 460 208 C 460 201 457 198 452 198 C 447 198 444 201 444 208 C 444 201 441 198 436 198 C 431 198 428 201 428 208 C 428 218 444 228 444 228 C 444 228 460 218 460 208 Z'/%3E%3C!-- Bottom left (red) --%3E%3Cpath fill='%238B0000' d='M 60 262 C 60 254 56 250 50 250 C 44 250 40 254 40 262 C 40 254 36 250 30 250 C 24 250 20 254 20 262 C 20 273 40 285 40 285 C 40 285 60 273 60 262 Z'/%3E%3C!-- Bottom center left (pink) --%3E%3Cpath fill='%23FF69B4' d='M 152 272 C 152 266 149 263 144 263 C 139 263 136 266 136 272 C 136 266 133 263 128 263 C 123 263 120 266 120 272 C 120 281 136 291 136 291 C 136 291 152 281 152 272 Z'/%3E%3C!-- Bottom center right (pink) --%3E%3Cpath fill='%23FF69B4' d='M 348 272 C 348 266 345 263 340 263 C 335 263 332 266 332 272 C 332 266 329 263 324 263 C 319 263 316 266 316 272 C 316 281 332 291 332 291 C 332 291 348 281 348 272 Z'/%3E%3C!-- Bottom right (red) --%3E%3Cpath fill='%238B0000' d='M 460 262 C 460 254 456 250 450 250 C 444 250 440 254 440 262 C 440 254 436 250 430 250 C 424 250 420 254 420 262 C 420 273 440 285 440 285 C 440 285 460 273 460 262 Z'/%3E%3C/g%3E%3C/svg%3E")
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 300'%3E%3Cg%3E%3C!-- Top left (red) --%3E%3Cpath fill='%238B0000' d='M 60 38 C 60 30 56 26 50 26 C 44 26 40 30 40 38 C 40 30 36 26 30 26 C 24 26 20 30 20 38 C 20 49 40 61 40 61 C 40 61 60 49 60 38 Z'/%3E%3C!-- Top center left (pink) --%3E%3Cpath fill='%23FF69B4' d='M 152 28 C 152 22 149 19 144 19 C 139 19 136 22 136 28 C 136 22 133 19 128 19 C 123 19 120 22 120 28 C 120 37 136 47 136 47 C 136 47 152 37 152 28 Z'/%3E%3C!-- Top center (red) --%3E%3Cpath fill='%238B0000' d='M 252 23 C 252 17 249 14 244 14 C 239 14 236 17 236 23 C 236 17 233 14 228 14 C 223 14 220 17 220 23 C 220 32 236 42 236 42 C 236 42 252 32 252 23 Z'/%3E%3C!-- Top center right (pink) --%3E%3Cpath fill='%23FF69B4' d='M 348 28 C 348 22 345 19 340 19 C 335 19 332 22 332 28 C 332 22 329 19 324 19 C 319 19 316 22 316 28 C 316 37 332 47 332 47 C 332 47 348 37 348 28 Z'/%3E%3C!-- Top right (red) --%3E%3Cpath fill='%238B0000' d='M 460 38 C 460 30 456 26 450 26 C 444 26 440 30 440 38 C 440 30 436 26 430 26 C 424 26 420 30 420 38 C 420 49 440 61 440 61 C 440 61 460 49 460 38 Z'/%3E%3C!-- Left side top (red) --%3E%3Cpath fill='%238B0000' d='M 52 88 C 52 81 49 78 44 78 C 39 78 36 81 36 88 C 36 81 33 78 28 78 C 23 78 20 81 20 88 C 20 98 36 108 36 108 C 36 108 52 98 52 88 Z'/%3E%3C!-- Left side middle (pink) --%3E%3Cpath fill='%23FF69B4' d='M 52 148 C 52 141 49 138 44 138 C 39 138 36 141 36 148 C 36 141 33 138 28 138 C 23 138 20 141 20 148 C 20 158 36 168 36 168 C 36 168 52 158 52 148 Z'/%3E%3C!-- Left side bottom (red) --%3E%3Cpath fill='%238B0000' d='M 52 208 C 52 201 49 198 44 198 C 39 198 36 201 36 208 C 36 201 33 198 28 198 C 23 198 20 201 20 208 C 20 218 36 228 36 228 C 36 228 52 218 52 208 Z'/%3E%3C!-- Right side top (pink) --%3E%3Cpath fill='%23FF69B4' d='M 460 88 C 460 81 457 78 452 78 C 447 78 444 81 444 88 C 444 81 441 78 436 78 C 431 78 428 81 428 88 C 428 98 444 108 444 108 C 444 108 460 98 460 88 Z'/%3E%3C!-- Right side middle (red) --%3E%3Cpath fill='%238B0000' d='M 460 148 C 460 141 457 138 452 138 C 447 138 444 141 444 148 C 444 141 441 138 436 138 C 431 138 428 141 428 148 C 428 158 444 168 444 168 C 444 168 460 158 460 148 Z'/%3E%3C!-- Right side bottom (pink) --%3E%3Cpath fill='%23FF69B4' d='M 460 208 C 460 201 457 198 452 198 C 447 198 444 201 444 208 C 444 201 441 198 436 198 C 431 198 428 201 428 208 C 428 218 444 228 444 228 C 444 228 460 218 460 208 Z'/%3E%3C!-- Bottom left (red) --%3E%3Cpath fill='%238B0000' d='M 60 262 C 60 254 56 250 50 250 C 44 250 40 254 40 262 C 40 254 36 250 30 250 C 24 250 20 254 20 262 C 20 273 40 285 40 285 C 40 285 60 273 60 262 Z'/%3E%3C!-- Bottom center left (pink) --%3E%3Cpath fill='%23FF69B4' d='M 152 272 C 152 266 149 263 144 263 C 139 263 136 266 136 272 C 136 266 133 263 128 263 C 123 263 120 266 120 272 C 120 281 136 291 136 291 C 136 291 152 281 152 272 Z'/%3E%3C!-- Bottom center right (pink) --%3E%3Cpath fill='%23FF69B4' d='M 348 272 C 348 266 345 263 340 263 C 335 263 332 266 332 272 C 332 266 329 263 324 263 C 319 263 316 266 316 272 C 316 281 332 291 332 291 C 332 291 348 281 348 272 Z'/%3E%3C!-- Bottom right (red) --%3E%3Cpath fill='%238B0000' d='M 460 262 C 460 254 456 250 450 250 C 444 250 440 254 440 262 C 440 254 436 250 430 250 C 424 250 420 254 420 262 C 420 273 440 285 440 285 C 440 285 460 273 460 262 Z'/%3E%3C!-- Additional bottom hearts evenly spaced --%3E%3Cpath fill='%238B0000' d='M 100 268 C 100 262 97 259 93 259 C 89 259 86 262 86 268 C 86 262 83 259 79 259 C 75 259 72 262 72 268 C 72 276 86 285 86 285 C 86 285 100 276 100 268 Z'/%3E%3Cpath fill='%23FF69B4' d='M 200 265 C 200 259 197 256 193 256 C 189 256 186 259 186 265 C 186 259 183 256 179 256 C 175 256 172 259 172 265 C 172 273 186 282 186 282 C 186 282 200 273 200 265 Z'/%3E%3Cpath fill='%238B0000' d='M 280 268 C 280 262 277 259 273 259 C 269 259 266 262 266 268 C 266 262 263 259 259 259 C 255 259 252 262 252 268 C 252 276 266 285 266 285 C 266 285 280 276 280 268 Z'/%3E%3Cpath fill='%23FF69B4' d='M 390 265 C 390 259 387 256 383 256 C 379 256 376 259 376 265 C 376 259 373 256 369 256 C 365 256 362 259 362 265 C 362 273 376 282 376 282 C 376 282 390 273 390 265 Z'/%3E%3C/g%3E%3C/svg%3E")
               `,
               backgroundSize: '100% 100%',
               backgroundRepeat: 'no-repeat',
             },
-            selectedPreset === 'flowers' && Platform.OS === 'web' && {
-              background: `linear-gradient(135deg, #FCD34D 0%, #FBBF24 30%, #F59E0B 70%, #F97316 100%)`,
-              backgroundImage: `
-                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 300'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23FCD34D'/%3E%3Cstop offset='30%25' style='stop-color:%23FBBF24'/%3E%3Cstop offset='70%25' style='stop-color:%23F59E0B'/%3E%3Cstop offset='100%25' style='stop-color:%23F97316'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='480' height='300' fill='url(%23bg)'/%3E%3Cg%3E%3C!-- Flowers with 5 petals and stems --%3E%3C!-- Top left pink flower --%3E%3Cline x1='30' y1='60' x2='30' y2='35' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='30' cy='20' rx='6' ry='8' fill='%23FF69B4' transform='rotate(0 30 20)'/%3E%3Cellipse cx='30' cy='20' rx='6' ry='8' fill='%23FF69B4' transform='rotate(72 30 20)'/%3E%3Cellipse cx='30' cy='20' rx='6' ry='8' fill='%23FF69B4' transform='rotate(144 30 20)'/%3E%3Cellipse cx='30' cy='20' rx='6' ry='8' fill='%23FF69B4' transform='rotate(216 30 20)'/%3E%3Cellipse cx='30' cy='20' rx='6' ry='8' fill='%23FF69B4' transform='rotate(288 30 20)'/%3E%3Ccircle cx='30' cy='20' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='25' cy='45' rx='8' ry='12' fill='%2322C55E' transform='rotate(30 25 45)'/%3E%3Cellipse cx='35' cy='48' rx='8' ry='12' fill='%2322C55E' transform='rotate(-20 35 48)'/%3E%3C!-- Top center left purple flower --%3E%3Cline x1='120' y1='70' x2='120' y2='45' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='120' cy='30' rx='6' ry='8' fill='%238B5CF6' transform='rotate(0 120 30)'/%3E%3Cellipse cx='120' cy='30' rx='6' ry='8' fill='%238B5CF6' transform='rotate(72 120 30)'/%3E%3Cellipse cx='120' cy='30' rx='6' ry='8' fill='%238B5CF6' transform='rotate(144 120 30)'/%3E%3Cellipse cx='120' cy='30' rx='6' ry='8' fill='%238B5CF6' transform='rotate(216 120 30)'/%3E%3Cellipse cx='120' cy='30' rx='6' ry='8' fill='%238B5CF6' transform='rotate(288 120 30)'/%3E%3Ccircle cx='120' cy='30' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='115' cy='55' rx='8' ry='12' fill='%2322C55E' transform='rotate(25 115 55)'/%3E%3C!-- Top center pink flower --%3E%3Cline x1='240' y1='70' x2='240' y2='45' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='240' cy='30' rx='7' ry='9' fill='%23EC4899' transform='rotate(0 240 30)'/%3E%3Cellipse cx='240' cy='30' rx='7' ry='9' fill='%23EC4899' transform='rotate(72 240 30)'/%3E%3Cellipse cx='240' cy='30' rx='7' ry='9' fill='%23EC4899' transform='rotate(144 240 30)'/%3E%3Cellipse cx='240' cy='30' rx='7' ry='9' fill='%23EC4899' transform='rotate(216 240 30)'/%3E%3Cellipse cx='240' cy='30' rx='7' ry='9' fill='%23EC4899' transform='rotate(288 240 30)'/%3E%3Ccircle cx='240' cy='30' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='235' cy='55' rx='8' ry='12' fill='%2322C55E' transform='rotate(25 235 55)'/%3E%3Cellipse cx='245' cy='58' rx='8' ry='12' fill='%2322C55E' transform='rotate(-15 245 58)'/%3E%3C!-- Top center right red flower --%3E%3Cline x1='360' y1='70' x2='360' y2='45' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='360' cy='30' rx='6' ry='8' fill='%23EF4444' transform='rotate(0 360 30)'/%3E%3Cellipse cx='360' cy='30' rx='6' ry='8' fill='%23EF4444' transform='rotate(72 360 30)'/%3E%3Cellipse cx='360' cy='30' rx='6' ry='8' fill='%23EF4444' transform='rotate(144 360 30)'/%3E%3Cellipse cx='360' cy='30' rx='6' ry='8' fill='%23EF4444' transform='rotate(216 360 30)'/%3E%3Cellipse cx='360' cy='30' rx='6' ry='8' fill='%23EF4444' transform='rotate(288 360 30)'/%3E%3Ccircle cx='360' cy='30' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='365' cy='55' rx='8' ry='12' fill='%2322C55E' transform='rotate(-25 365 55)'/%3E%3C!-- Top right purple flower --%3E%3Cline x1='450' y1='60' x2='450' y2='35' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='450' cy='20' rx='7' ry='9' fill='%238B5CF6' transform='rotate(0 450 20)'/%3E%3Cellipse cx='450' cy='20' rx='7' ry='9' fill='%238B5CF6' transform='rotate(72 450 20)'/%3E%3Cellipse cx='450' cy='20' rx='7' ry='9' fill='%238B5CF6' transform='rotate(144 450 20)'/%3E%3Cellipse cx='450' cy='20' rx='7' ry='9' fill='%238B5CF6' transform='rotate(216 450 20)'/%3E%3Cellipse cx='450' cy='20' rx='7' ry='9' fill='%238B5CF6' transform='rotate(288 450 20)'/%3E%3Ccircle cx='450' cy='20' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='445' cy='45' rx='8' ry='12' fill='%2322C55E' transform='rotate(-30 445 45)'/%3E%3Cellipse cx='455' cy='48' rx='8' ry='12' fill='%2322C55E' transform='rotate(20 455 48)'/%3E%3C!-- Left side top purple flower --%3E%3Cellipse cx='28' cy='82' rx='6' ry='8' fill='%238B5CF6' transform='rotate(0 28 82)'/%3E%3Cellipse cx='28' cy='82' rx='6' ry='8' fill='%238B5CF6' transform='rotate(72 28 82)'/%3E%3Cellipse cx='28' cy='82' rx='6' ry='8' fill='%238B5CF6' transform='rotate(144 28 82)'/%3E%3Cellipse cx='28' cy='82' rx='6' ry='8' fill='%238B5CF6' transform='rotate(216 28 82)'/%3E%3Cellipse cx='28' cy='82' rx='6' ry='8' fill='%238B5CF6' transform='rotate(288 28 82)'/%3E%3Ccircle cx='28' cy='82' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='34' cy='88' rx='5' ry='7' fill='%2322C55E' transform='rotate(25 34 88)'/%3E%3Cellipse cx='22' cy='88' rx='5' ry='7' fill='%2322C55E' transform='rotate(-25 22 88)'/%3E%3C!-- Left side upper pink flower --%3E%3Cellipse cx='38' cy='108' rx='6' ry='8' fill='%23FF69B4' transform='rotate(0 38 108)'/%3E%3Cellipse cx='38' cy='108' rx='6' ry='8' fill='%23FF69B4' transform='rotate(72 38 108)'/%3E%3Cellipse cx='38' cy='108' rx='6' ry='8' fill='%23FF69B4' transform='rotate(144 38 108)'/%3E%3Cellipse cx='38' cy='108' rx='6' ry='8' fill='%23FF69B4' transform='rotate(216 38 108)'/%3E%3Cellipse cx='38' cy='108' rx='6' ry='8' fill='%23FF69B4' transform='rotate(288 38 108)'/%3E%3Ccircle cx='38' cy='108' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='44' cy='114' rx='5' ry='7' fill='%2322C55E' transform='rotate(20 44 114)'/%3E%3Cellipse cx='32' cy='114' rx='5' ry='7' fill='%2322C55E' transform='rotate(-30 32 114)'/%3E%3C!-- Left side red flower --%3E%3Cellipse cx='25' cy='138' rx='6' ry='8' fill='%23EF4444' transform='rotate(0 25 138)'/%3E%3Cellipse cx='25' cy='138' rx='6' ry='8' fill='%23EF4444' transform='rotate(72 25 138)'/%3E%3Cellipse cx='25' cy='138' rx='6' ry='8' fill='%23EF4444' transform='rotate(144 25 138)'/%3E%3Cellipse cx='25' cy='138' rx='6' ry='8' fill='%23EF4444' transform='rotate(216 25 138)'/%3E%3Cellipse cx='25' cy='138' rx='6' ry='8' fill='%23EF4444' transform='rotate(288 25 138)'/%3E%3Ccircle cx='25' cy='138' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='31' cy='144' rx='5' ry='7' fill='%2322C55E' transform='rotate(30 31 144)'/%3E%3Cellipse cx='19' cy='144' rx='5' ry='7' fill='%2322C55E' transform='rotate(-20 19 144)'/%3E%3C!-- Middle left pink flower --%3E%3Cellipse cx='35' cy='168' rx='6' ry='8' fill='%23FF69B4' transform='rotate(0 35 168)'/%3E%3Cellipse cx='35' cy='168' rx='6' ry='8' fill='%23FF69B4' transform='rotate(72 35 168)'/%3E%3Cellipse cx='35' cy='168' rx='6' ry='8' fill='%23FF69B4' transform='rotate(144 35 168)'/%3E%3Cellipse cx='35' cy='168' rx='6' ry='8' fill='%23FF69B4' transform='rotate(216 35 168)'/%3E%3Cellipse cx='35' cy='168' rx='6' ry='8' fill='%23FF69B4' transform='rotate(288 35 168)'/%3E%3Ccircle cx='35' cy='168' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='41' cy='174' rx='5' ry='7' fill='%2322C55E' transform='rotate(25 41 174)'/%3E%3Cellipse cx='29' cy='174' rx='5' ry='7' fill='%2322C55E' transform='rotate(-25 29 174)'/%3E%3C!-- Left side orange flower --%3E%3Cellipse cx='22' cy='198' rx='6' ry='8' fill='%23F97316' transform='rotate(0 22 198)'/%3E%3Cellipse cx='22' cy='198' rx='6' ry='8' fill='%23F97316' transform='rotate(72 22 198)'/%3E%3Cellipse cx='22' cy='198' rx='6' ry='8' fill='%23F97316' transform='rotate(144 22 198)'/%3E%3Cellipse cx='22' cy='198' rx='6' ry='8' fill='%23F97316' transform='rotate(216 22 198)'/%3E%3Cellipse cx='22' cy='198' rx='6' ry='8' fill='%23F97316' transform='rotate(288 22 198)'/%3E%3Ccircle cx='22' cy='198' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='28' cy='204' rx='5' ry='7' fill='%2322C55E' transform='rotate(20 28 204)'/%3E%3Cellipse cx='16' cy='204' rx='5' ry='7' fill='%2322C55E' transform='rotate(-30 16 204)'/%3E%3C!-- Left side bottom red flower --%3E%3Cellipse cx='32' cy='228' rx='6' ry='8' fill='%23EF4444' transform='rotate(0 32 228)'/%3E%3Cellipse cx='32' cy='228' rx='6' ry='8' fill='%23EF4444' transform='rotate(72 32 228)'/%3E%3Cellipse cx='32' cy='228' rx='6' ry='8' fill='%23EF4444' transform='rotate(144 32 228)'/%3E%3Cellipse cx='32' cy='228' rx='6' ry='8' fill='%23EF4444' transform='rotate(216 32 228)'/%3E%3Cellipse cx='32' cy='228' rx='6' ry='8' fill='%23EF4444' transform='rotate(288 32 228)'/%3E%3Ccircle cx='32' cy='228' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='38' cy='234' rx='5' ry='7' fill='%2322C55E' transform='rotate(30 38 234)'/%3E%3Cellipse cx='26' cy='234' rx='5' ry='7' fill='%2322C55E' transform='rotate(-20 26 234)'/%3E%3C!-- Right side top red flower --%3E%3Cellipse cx='452' cy='82' rx='6' ry='8' fill='%23EF4444' transform='rotate(0 452 82)'/%3E%3Cellipse cx='452' cy='82' rx='6' ry='8' fill='%23EF4444' transform='rotate(72 452 82)'/%3E%3Cellipse cx='452' cy='82' rx='6' ry='8' fill='%23EF4444' transform='rotate(144 452 82)'/%3E%3Cellipse cx='452' cy='82' rx='6' ry='8' fill='%23EF4444' transform='rotate(216 452 82)'/%3E%3Cellipse cx='452' cy='82' rx='6' ry='8' fill='%23EF4444' transform='rotate(288 452 82)'/%3E%3Ccircle cx='452' cy='82' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='446' cy='88' rx='5' ry='7' fill='%2322C55E' transform='rotate(-25 446 88)'/%3E%3Cellipse cx='458' cy='88' rx='5' ry='7' fill='%2322C55E' transform='rotate(25 458 88)'/%3E%3C!-- Right side upper purple flower --%3E%3Cellipse cx='442' cy='108' rx='6' ry='8' fill='%238B5CF6' transform='rotate(0 442 108)'/%3E%3Cellipse cx='442' cy='108' rx='6' ry='8' fill='%238B5CF6' transform='rotate(72 442 108)'/%3E%3Cellipse cx='442' cy='108' rx='6' ry='8' fill='%238B5CF6' transform='rotate(144 442 108)'/%3E%3Cellipse cx='442' cy='108' rx='6' ry='8' fill='%238B5CF6' transform='rotate(216 442 108)'/%3E%3Cellipse cx='442' cy='108' rx='6' ry='8' fill='%238B5CF6' transform='rotate(288 442 108)'/%3E%3Ccircle cx='442' cy='108' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='436' cy='114' rx='5' ry='7' fill='%2322C55E' transform='rotate(-20 436 114)'/%3E%3Cellipse cx='448' cy='114' rx='5' ry='7' fill='%2322C55E' transform='rotate(30 448 114)'/%3E%3C!-- Right side pink flower --%3E%3Cellipse cx='455' cy='138' rx='6' ry='8' fill='%23FF69B4' transform='rotate(0 455 138)'/%3E%3Cellipse cx='455' cy='138' rx='6' ry='8' fill='%23FF69B4' transform='rotate(72 455 138)'/%3E%3Cellipse cx='455' cy='138' rx='6' ry='8' fill='%23FF69B4' transform='rotate(144 455 138)'/%3E%3Cellipse cx='455' cy='138' rx='6' ry='8' fill='%23FF69B4' transform='rotate(216 455 138)'/%3E%3Cellipse cx='455' cy='138' rx='6' ry='8' fill='%23FF69B4' transform='rotate(288 455 138)'/%3E%3Ccircle cx='455' cy='138' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='449' cy='144' rx='5' ry='7' fill='%2322C55E' transform='rotate(-30 449 144)'/%3E%3Cellipse cx='461' cy='144' rx='5' ry='7' fill='%2322C55E' transform='rotate(20 461 144)'/%3E%3C!-- Middle right orange flower --%3E%3Cellipse cx='445' cy='168' rx='6' ry='8' fill='%23F97316' transform='rotate(0 445 168)'/%3E%3Cellipse cx='445' cy='168' rx='6' ry='8' fill='%23F97316' transform='rotate(72 445 168)'/%3E%3Cellipse cx='445' cy='168' rx='6' ry='8' fill='%23F97316' transform='rotate(144 445 168)'/%3E%3Cellipse cx='445' cy='168' rx='6' ry='8' fill='%23F97316' transform='rotate(216 445 168)'/%3E%3Cellipse cx='445' cy='168' rx='6' ry='8' fill='%23F97316' transform='rotate(288 445 168)'/%3E%3Ccircle cx='445' cy='168' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='439' cy='174' rx='5' ry='7' fill='%2322C55E' transform='rotate(-25 439 174)'/%3E%3Cellipse cx='451' cy='174' rx='5' ry='7' fill='%2322C55E' transform='rotate(25 451 174)'/%3E%3C!-- Right side red flower --%3E%3Cellipse cx='458' cy='198' rx='6' ry='8' fill='%23EF4444' transform='rotate(0 458 198)'/%3E%3Cellipse cx='458' cy='198' rx='6' ry='8' fill='%23EF4444' transform='rotate(72 458 198)'/%3E%3Cellipse cx='458' cy='198' rx='6' ry='8' fill='%23EF4444' transform='rotate(144 458 198)'/%3E%3Cellipse cx='458' cy='198' rx='6' ry='8' fill='%23EF4444' transform='rotate(216 458 198)'/%3E%3Cellipse cx='458' cy='198' rx='6' ry='8' fill='%23EF4444' transform='rotate(288 458 198)'/%3E%3Ccircle cx='458' cy='198' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='452' cy='204' rx='5' ry='7' fill='%2322C55E' transform='rotate(-20 452 204)'/%3E%3Cellipse cx='464' cy='204' rx='5' ry='7' fill='%2322C55E' transform='rotate(30 464 204)'/%3E%3C!-- Right side bottom purple flower --%3E%3Cellipse cx='448' cy='228' rx='6' ry='8' fill='%238B5CF6' transform='rotate(0 448 228)'/%3E%3Cellipse cx='448' cy='228' rx='6' ry='8' fill='%238B5CF6' transform='rotate(72 448 228)'/%3E%3Cellipse cx='448' cy='228' rx='6' ry='8' fill='%238B5CF6' transform='rotate(144 448 228)'/%3E%3Cellipse cx='448' cy='228' rx='6' ry='8' fill='%238B5CF6' transform='rotate(216 448 228)'/%3E%3Cellipse cx='448' cy='228' rx='6' ry='8' fill='%238B5CF6' transform='rotate(288 448 228)'/%3E%3Ccircle cx='448' cy='228' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='442' cy='234' rx='5' ry='7' fill='%2322C55E' transform='rotate(-30 442 234)'/%3E%3Cellipse cx='454' cy='234' rx='5' ry='7' fill='%2322C55E' transform='rotate(20 454 234)'/%3E%3C!-- Bottom left red flower --%3E%3Cline x1='50' y1='240' x2='50' y2='265' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='50' cy='280' rx='6' ry='8' fill='%23EF4444' transform='rotate(0 50 280)'/%3E%3Cellipse cx='50' cy='280' rx='6' ry='8' fill='%23EF4444' transform='rotate(72 50 280)'/%3E%3Cellipse cx='50' cy='280' rx='6' ry='8' fill='%23EF4444' transform='rotate(144 50 280)'/%3E%3Cellipse cx='50' cy='280' rx='6' ry='8' fill='%23EF4444' transform='rotate(216 50 280)'/%3E%3Cellipse cx='50' cy='280' rx='6' ry='8' fill='%23EF4444' transform='rotate(288 50 280)'/%3E%3Ccircle cx='50' cy='280' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='45' cy='255' rx='8' ry='12' fill='%2322C55E' transform='rotate(-30 45 255)'/%3E%3Cellipse cx='55' cy='252' rx='8' ry='12' fill='%2322C55E' transform='rotate(20 55 252)'/%3E%3C!-- Bottom center left purple flower --%3E%3Cline x1='150' y1='230' x2='150' y2='255' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='150' cy='270' rx='6' ry='8' fill='%238B5CF6' transform='rotate(0 150 270)'/%3E%3Cellipse cx='150' cy='270' rx='6' ry='8' fill='%238B5CF6' transform='rotate(72 150 270)'/%3E%3Cellipse cx='150' cy='270' rx='6' ry='8' fill='%238B5CF6' transform='rotate(144 150 270)'/%3E%3Cellipse cx='150' cy='270' rx='6' ry='8' fill='%238B5CF6' transform='rotate(216 150 270)'/%3E%3Cellipse cx='150' cy='270' rx='6' ry='8' fill='%238B5CF6' transform='rotate(288 150 270)'/%3E%3Ccircle cx='150' cy='270' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='145' cy='245' rx='8' ry='12' fill='%2322C55E' transform='rotate(-25 145 245)'/%3E%3C!-- Bottom center pink flower --%3E%3Cline x1='240' y1='230' x2='240' y2='255' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='240' cy='270' rx='6' ry='8' fill='%23EC4899' transform='rotate(0 240 270)'/%3E%3Cellipse cx='240' cy='270' rx='6' ry='8' fill='%23EC4899' transform='rotate(72 240 270)'/%3E%3Cellipse cx='240' cy='270' rx='6' ry='8' fill='%23EC4899' transform='rotate(144 240 270)'/%3E%3Cellipse cx='240' cy='270' rx='6' ry='8' fill='%23EC4899' transform='rotate(216 240 270)'/%3E%3Cellipse cx='240' cy='270' rx='6' ry='8' fill='%23EC4899' transform='rotate(288 240 270)'/%3E%3Ccircle cx='240' cy='270' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='235' cy='245' rx='8' ry='12' fill='%2322C55E' transform='rotate(-25 235 245)'/%3E%3Cellipse cx='245' cy='242' rx='8' ry='12' fill='%2322C55E' transform='rotate(15 245 242)'/%3E%3C!-- Bottom center right pink flower --%3E%3Cline x1='330' y1='230' x2='330' y2='255' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='330' cy='270' rx='6' ry='8' fill='%23FF69B4' transform='rotate(0 330 270)'/%3E%3Cellipse cx='330' cy='270' rx='6' ry='8' fill='%23FF69B4' transform='rotate(72 330 270)'/%3E%3Cellipse cx='330' cy='270' rx='6' ry='8' fill='%23FF69B4' transform='rotate(144 330 270)'/%3E%3Cellipse cx='330' cy='270' rx='6' ry='8' fill='%23FF69B4' transform='rotate(216 330 270)'/%3E%3Cellipse cx='330' cy='270' rx='6' ry='8' fill='%23FF69B4' transform='rotate(288 330 270)'/%3E%3Ccircle cx='330' cy='270' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='335' cy='245' rx='8' ry='12' fill='%2322C55E' transform='rotate(25 335 245)'/%3E%3C!-- Bottom right orange flower --%3E%3Cline x1='430' y1='240' x2='430' y2='265' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='430' cy='280' rx='6' ry='8' fill='%23F97316' transform='rotate(0 430 280)'/%3E%3Cellipse cx='430' cy='280' rx='6' ry='8' fill='%23F97316' transform='rotate(72 430 280)'/%3E%3Cellipse cx='430' cy='280' rx='6' ry='8' fill='%23F97316' transform='rotate(144 430 280)'/%3E%3Cellipse cx='430' cy='280' rx='6' ry='8' fill='%23F97316' transform='rotate(216 430 280)'/%3E%3Cellipse cx='430' cy='280' rx='6' ry='8' fill='%23F97316' transform='rotate(288 430 280)'/%3E%3Ccircle cx='430' cy='280' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='425' cy='255' rx='8' ry='12' fill='%2322C55E' transform='rotate(30 425 255)'/%3E%3Cellipse cx='435' cy='252' rx='8' ry='12' fill='%2322C55E' transform='rotate(-20 435 252)'/%3E%3C!-- Additional leaves scattered --%3E%3Cellipse cx='90' cy='100' rx='8' ry='12' fill='%2322C55E' transform='rotate(45 90 100)'/%3E%3Cellipse cx='180' cy='120' rx='8' ry='12' fill='%2322C55E' transform='rotate(-30 180 120)'/%3E%3Cellipse cx='300' cy='110' rx='8' ry='12' fill='%2322C55E' transform='rotate(35 300 110)'/%3E%3Cellipse cx='390' cy='100' rx='8' ry='12' fill='%2322C55E' transform='rotate(-45 390 100)'/%3E%3Cellipse cx='90' cy='200' rx='8' ry='12' fill='%2322C55E' transform='rotate(-35 90 200)'/%3E%3Cellipse cx='180' cy='190' rx='8' ry='12' fill='%2322C55E' transform='rotate(40 180 190)'/%3E%3Cellipse cx='300' cy='200' rx='8' ry='12' fill='%2322C55E' transform='rotate(-40 300 200)'/%3E%3Cellipse cx='390' cy='210' rx='8' ry='12' fill='%2322C55E' transform='rotate(30 390 210)'/%3E%3C/g%3E%3C/svg%3E")
-              `,
+           selectedPreset === 'flowers' && Platform.OS === 'web' && {
+  background: `#EAB308`,
+  backgroundImage: `
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 300'%3E%3Crect width='480' height='300' fill='%23EAB308'/%3E%3Cg%3E%3C!-- Top border flowers --%3E%3C!-- Violet --%3E%3Ccircle cx='60' cy='10' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='68' cy='15' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='68' cy='25' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='60' cy='30' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='52' cy='25' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='52' cy='15' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='60' cy='20' r='5' fill='%23F97316'/%3E%3C!-- Indigo --%3E%3Ccircle cx='160' cy='10' r='6' fill='%234F46E5'/%3E%3Ccircle cx='168' cy='15' r='6' fill='%234F46E5'/%3E%3Ccircle cx='168' cy='25' r='6' fill='%234F46E5'/%3E%3Ccircle cx='160' cy='30' r='6' fill='%234F46E5'/%3E%3Ccircle cx='152' cy='25' r='6' fill='%234F46E5'/%3E%3Ccircle cx='152' cy='15' r='6' fill='%234F46E5'/%3E%3Ccircle cx='160' cy='20' r='5' fill='%23F97316'/%3E%3C!-- Blue --%3E%3Ccircle cx='240' cy='10' r='6' fill='%233B82F6'/%3E%3Ccircle cx='248' cy='15' r='6' fill='%233B82F6'/%3E%3Ccircle cx='248' cy='25' r='6' fill='%233B82F6'/%3E%3Ccircle cx='240' cy='30' r='6' fill='%233B82F6'/%3E%3Ccircle cx='232' cy='25' r='6' fill='%233B82F6'/%3E%3Ccircle cx='232' cy='15' r='6' fill='%233B82F6'/%3E%3Ccircle cx='240' cy='20' r='5' fill='%23F97316'/%3E%3C!-- Green --%3E%3Ccircle cx='320' cy='10' r='6' fill='%2322C55E'/%3E%3Ccircle cx='328' cy='15' r='6' fill='%2322C55E'/%3E%3Ccircle cx='328' cy='25' r='6' fill='%2322C55E'/%3E%3Ccircle cx='320' cy='30' r='6' fill='%2322C55E'/%3E%3Ccircle cx='312' cy='25' r='6' fill='%2322C55E'/%3E%3Ccircle cx='312' cy='15' r='6' fill='%2322C55E'/%3E%3Ccircle cx='320' cy='20' r='5' fill='%23F97316'/%3E%3C!-- Red --%3E%3Ccircle cx='420' cy='10' r='6' fill='%23EF4444'/%3E%3Ccircle cx='428' cy='15' r='6' fill='%23EF4444'/%3E%3Ccircle cx='428' cy='25' r='6' fill='%23EF4444'/%3E%3Ccircle cx='420' cy='30' r='6' fill='%23EF4444'/%3E%3Ccircle cx='412' cy='25' r='6' fill='%23EF4444'/%3E%3Ccircle cx='412' cy='15' r='6' fill='%23EF4444'/%3E%3Ccircle cx='420' cy='20' r='5' fill='%23F97316'/%3E%3C!-- Left border flowers --%3E%3C!-- Red --%3E%3Ccircle cx='25' cy='65' r='6' fill='%23EF4444'/%3E%3Ccircle cx='33' cy='70' r='6' fill='%23EF4444'/%3E%3Ccircle cx='33' cy='80' r='6' fill='%23EF4444'/%3E%3Ccircle cx='25' cy='85' r='6' fill='%23EF4444'/%3E%3Ccircle cx='17' cy='80' r='6' fill='%23EF4444'/%3E%3Ccircle cx='17' cy='70' r='6' fill='%23EF4444'/%3E%3Ccircle cx='25' cy='75' r='5' fill='%23F97316'/%3E%3C!-- Violet --%3E%3Ccircle cx='25' cy='140' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='33' cy='145' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='33' cy='155' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='25' cy='160' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='17' cy='155' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='17' cy='145' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='25' cy='150' r='5' fill='%23F97316'/%3E%3C!-- Indigo --%3E%3Ccircle cx='25' cy='215' r='6' fill='%234F46E5'/%3E%3Ccircle cx='33' cy='220' r='6' fill='%234F46E5'/%3E%3Ccircle cx='33' cy='230' r='6' fill='%234F46E5'/%3E%3Ccircle cx='25' cy='235' r='6' fill='%234F46E5'/%3E%3Ccircle cx='17' cy='230' r='6' fill='%234F46E5'/%3E%3Ccircle cx='17' cy='220' r='6' fill='%234F46E5'/%3E%3Ccircle cx='25' cy='225' r='5' fill='%23F97316'/%3E%3C!-- Right border flowers --%3E%3C!-- Blue --%3E%3Ccircle cx='455' cy='65' r='6' fill='%233B82F6'/%3E%3Ccircle cx='463' cy='70' r='6' fill='%233B82F6'/%3E%3Ccircle cx='463' cy='80' r='6' fill='%233B82F6'/%3E%3Ccircle cx='455' cy='85' r='6' fill='%233B82F6'/%3E%3Ccircle cx='447' cy='80' r='6' fill='%233B82F6'/%3E%3Ccircle cx='447' cy='70' r='6' fill='%233B82F6'/%3E%3Ccircle cx='455' cy='75' r='5' fill='%23F97316'/%3E%3C!-- Green --%3E%3Ccircle cx='455' cy='140' r='6' fill='%2322C55E'/%3E%3Ccircle cx='463' cy='145' r='6' fill='%2322C55E'/%3E%3Ccircle cx='463' cy='155' r='6' fill='%2322C55E'/%3E%3Ccircle cx='455' cy='160' r='6' fill='%2322C55E'/%3E%3Ccircle cx='447' cy='155' r='6' fill='%2322C55E'/%3E%3Ccircle cx='447' cy='145' r='6' fill='%2322C55E'/%3E%3Ccircle cx='455' cy='150' r='5' fill='%23F97316'/%3E%3C!-- Red --%3E%3Ccircle cx='455' cy='215' r='6' fill='%23EF4444'/%3E%3Ccircle cx='463' cy='220' r='6' fill='%23EF4444'/%3E%3Ccircle cx='463' cy='230' r='6' fill='%23EF4444'/%3E%3Ccircle cx='455' cy='235' r='6' fill='%23EF4444'/%3E%3Ccircle cx='447' cy='230' r='6' fill='%23EF4444'/%3E%3Ccircle cx='447' cy='220' r='6' fill='%23EF4444'/%3E%3Ccircle cx='455' cy='225' r='5' fill='%23F97316'/%3E%3C!-- Bottom border flowers --%3E%3C!-- Red --%3E%3Ccircle cx='60' cy='270' r='6' fill='%23EF4444'/%3E%3Ccircle cx='68' cy='275' r='6' fill='%23EF4444'/%3E%3Ccircle cx='68' cy='285' r='6' fill='%23EF4444'/%3E%3Ccircle cx='60' cy='290' r='6' fill='%23EF4444'/%3E%3Ccircle cx='52' cy='285' r='6' fill='%23EF4444'/%3E%3Ccircle cx='52' cy='275' r='6' fill='%23EF4444'/%3E%3Ccircle cx='60' cy='280' r='5' fill='%23F97316'/%3E%3C!-- Violet --%3E%3Ccircle cx='160' cy='270' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='168' cy='275' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='168' cy='285' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='160' cy='290' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='152' cy='285' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='152' cy='275' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='160' cy='280' r='5' fill='%23F97316'/%3E%3C!-- Indigo --%3E%3Ccircle cx='240' cy='270' r='6' fill='%234F46E5'/%3E%3Ccircle cx='248' cy='275' r='6' fill='%234F46E5'/%3E%3Ccircle cx='248' cy='285' r='6' fill='%234F46E5'/%3E%3Ccircle cx='240' cy='290' r='6' fill='%234F46E5'/%3E%3Ccircle cx='232' cy='285' r='6' fill='%234F46E5'/%3E%3Ccircle cx='232' cy='275' r='6' fill='%234F46E5'/%3E%3Ccircle cx='240' cy='280' r='5' fill='%23F97316'/%3E%3C!-- Blue --%3E%3Ccircle cx='320' cy='270' r='6' fill='%233B82F6'/%3E%3Ccircle cx='328' cy='275' r='6' fill='%233B82F6'/%3E%3Ccircle cx='328' cy='285' r='6' fill='%233B82F6'/%3E%3Ccircle cx='320' cy='290' r='6' fill='%233B82F6'/%3E%3Ccircle cx='312' cy='285' r='6' fill='%233B82F6'/%3E%3Ccircle cx='312' cy='275' r='6' fill='%233B82F6'/%3E%3Ccircle cx='320' cy='280' r='5' fill='%23F97316'/%3E%3C!-- Green --%3E%3Ccircle cx='420' cy='270' r='6' fill='%2322C55E'/%3E%3Ccircle cx='428' cy='275' r='6' fill='%2322C55E'/%3E%3Ccircle cx='428' cy='285' r='6' fill='%2322C55E'/%3E%3Ccircle cx='420' cy='290' r='6' fill='%2322C55E'/%3E%3Ccircle cx='412' cy='285' r='6' fill='%2322C55E'/%3E%3Ccircle cx='412' cy='275' r='6' fill='%2322C55E'/%3E%3Ccircle cx='420' cy='280' r='5' fill='%23F97316'/%3E%3C/g%3E%3C/svg%3E")
+  `,
+  
               backgroundSize: '100% 100%',
               backgroundRepeat: 'no-repeat',
             },
@@ -320,121 +429,86 @@ export default function TapeShellDesigner({
               <>
                 <View style={styles.loveBackground} />
                 <View style={styles.patternOverlay}>
-                  {[
-                    { top: '30%', left: '20%', size: 24 },
-                    { top: '20%', right: '20%', size: 18 },
-                    { top: '70%', left: '40%', size: 22 },
-                    { top: '60%', left: '70%', size: 16 },
-                    { top: '80%', left: '15%', size: 20 },
-                    { top: '75%', right: '10%', size: 22 },
-                    { top: '15%', left: '50%', size: 20 },
-                    { top: '50%', left: '25%', size: 16 },
-                    { top: '40%', right: '15%', size: 20 },
-                    { top: '85%', left: '60%', size: 22 },
-                    { top: '10%', right: '10%', size: 16 },
-                    { top: '90%', right: '5%', size: 20 },
-                  ].map((heart, i) => (
-                    <Text
-                      key={i}
-                      style={[
-                        styles.heartEmoji,
-                        {
-                          top: heart.top,
-                          left: heart.left,
-                          fontSize: heart.size,
-                        },
-                      ]}
-                    >
-                      ❤️
-                    </Text>
-                  ))}
+                  {/* Hearts positioned ONLY in the narrow beige border areas */}
+                  {/* Top beige border (Android: 320x200 with 30px padding, top border at 0-30px) */}
+                  <HeartShape color="#FF69B4" size={7} top={5} left={15} />
+                  <HeartShape color="#8B0000" size={8} top={5} left={50} />
+                  <HeartShape color="#FF69B4" size={7} top={5} left={90} />
+                  <HeartShape color="#8B0000" size={8} top={5} left={130} />
+                  <HeartShape color="#FF69B4" size={7} top={5} left={170} />
+                  <HeartShape color="#8B0000" size={8} top={5} left={210} />
+                  <HeartShape color="#FF69B4" size={7} top={5} left={250} />
+                  <HeartShape color="#8B0000" size={7} top={5} left={285} />
+                  
+                  {/* Left beige border (Android: left border at 0-30px, avoid black center at 30-290px) */}
+                  <HeartShape color="#8B0000" size={7} top={35} left={5} />
+                  <HeartShape color="#FF69B4" size={8} top={65} left={5} />
+                  <HeartShape color="#8B0000" size={7} top={95} left={5} />
+                  <HeartShape color="#FF69B4" size={8} top={125} left={5} />
+                  <HeartShape color="#8B0000" size={7} top={155} left={5} />
+                  
+                  {/* Right beige border (Android: right border at 290-320px) */}
+                  <HeartShape color="#FF69B4" size={7} top={35} left={300} />
+                  <HeartShape color="#8B0000" size={8} top={65} left={300} />
+                  <HeartShape color="#FF69B4" size={7} top={95} left={300} />
+                  <HeartShape color="#8B0000" size={8} top={125} left={300} />
+                  <HeartShape color="#FF69B4" size={7} top={155} left={300} />
+                  
+                  {/* Bottom beige border (Android: bottom border at 170-200px) */}
+                  <HeartShape color="#8B0000" size={7} top={180} left={15} />
+                  <HeartShape color="#FF69B4" size={8} top={180} left={50} />
+                  <HeartShape color="#8B0000" size={7} top={180} left={90} />
+                  <HeartShape color="#FF69B4" size={8} top={180} left={130} />
+                  <HeartShape color="#8B0000" size={7} top={180} left={170} />
+                  <HeartShape color="#FF69B4" size={8} top={180} left={210} />
+                  <HeartShape color="#8B0000" size={7} top={180} left={250} />
+                  <HeartShape color="#FF69B4" size={7} top={180} left={285} />
                 </View>
               </>
             )}
             {Platform.OS !== 'web' && selectedPreset === 'retro' && (
               <View style={styles.patternOverlay}>
-                {/* Horizontal retro stripes */}
-                <View style={[styles.retroStripe, { top: '35%', backgroundColor: '#EF4444' }]} />
-                <View style={[styles.retroStripe, { top: '43%', backgroundColor: '#F97316' }]} />
-                <View style={[styles.retroStripe, { top: '51%', backgroundColor: '#EAB308' }]} />
+                {/* Horizontal retro stripes on the border areas only (not on black center) */}
+                {/* Left side stripes - 9% width for Android (320px * 9% = 28.8px, stays within 30px padding) */}
+                <View style={{ position: 'absolute', top: '35%', left: 0, width: '9%', height: 8, backgroundColor: '#EF4444' }} />
+                <View style={{ position: 'absolute', top: '43%', left: 0, width: '9%', height: 8, backgroundColor: '#F97316' }} />
+                <View style={{ position: 'absolute', top: '51%', left: 0, width: '9%', height: 8, backgroundColor: '#EAB308' }} />
+                {/* Right side stripes - 9% width for Android */}
+                <View style={{ position: 'absolute', top: '35%', right: 0, width: '9%', height: 8, backgroundColor: '#EF4444' }} />
+                <View style={{ position: 'absolute', top: '43%', right: 0, width: '9%', height: 8, backgroundColor: '#F97316' }} />
+                <View style={{ position: 'absolute', top: '51%', right: 0, width: '9%', height: 8, backgroundColor: '#EAB308' }} />
                 {/* Retro text on blue shell */}
                 <Text style={[styles.retroSmallText, { bottom: '15%', right: '10%' }]}>30</Text>
               </View>
             )}
             {Platform.OS !== 'web' && selectedPreset === 'flowers' && (
               <View style={styles.patternOverlay}>
-                {/* Top left pink flowers */}
-                <View style={[styles.flowerPetal, { top: 15, left: 15, backgroundColor: '#FF69B4' }]} />
-                <View style={[styles.flowerPetal, { top: 10, left: 12, backgroundColor: '#FF69B4' }]} />
-                <View style={[styles.flowerPetal, { top: 10, left: 18, backgroundColor: '#FF69B4' }]} />
-                <View style={[styles.flowerPetal, { top: 20, left: 12, backgroundColor: '#FF69B4' }]} />
-                <View style={[styles.flowerPetal, { top: 20, left: 18, backgroundColor: '#FF69B4' }]} />
-                <View style={[styles.flowerCenter, { top: 15, left: 15, backgroundColor: '#FCD34D' }]} />
+                {/* VIBGYOR flowers distributed around borders - Violet, Indigo, Blue, Green, Yellow, Red */}
+                {/* Top border flowers */}
+                <Flower petalColor="#8B5CF6" centerColor="#F97316" size={24} top={5} left={15} />
+                <Flower petalColor="#4F46E5" centerColor="#F97316" size={24} top={5} left={80} />
+                <Flower petalColor="#3B82F6" centerColor="#F97316" size={24} top={5} left={145} />
+                <Flower petalColor="#22C55E" centerColor="#F97316" size={24} top={5} left={210} />
+                <Flower petalColor="#EAB308" centerColor="#F97316" size={24} top={5} left={275} />
                 
-                {/* Top right purple flowers */}
-                <View style={[styles.flowerPetal, { top: 15, right: 15, backgroundColor: '#8B5CF6' }]} />
-                <View style={[styles.flowerPetal, { top: 10, right: 12, backgroundColor: '#8B5CF6' }]} />
-                <View style={[styles.flowerPetal, { top: 10, right: 18, backgroundColor: '#8B5CF6' }]} />
-                <View style={[styles.flowerPetal, { top: 20, right: 12, backgroundColor: '#8B5CF6' }]} />
-                <View style={[styles.flowerPetal, { top: 20, right: 18, backgroundColor: '#8B5CF6' }]} />
-                <View style={[styles.flowerCenter, { top: 15, right: 15, backgroundColor: '#FCD34D' }]} />
+                {/* Left border flowers */}
+                <Flower petalColor="#EF4444" centerColor="#F97316" size={22} top={45} left={5} />
+                <Flower petalColor="#8B5CF6" centerColor="#F97316" size={22} top={85} left={5} />
+                <Flower petalColor="#4F46E5" centerColor="#F97316" size={22} top={125} left={5} />
                 
-                {/* Left side leaves */}
-                <View style={[styles.leaf, { top: 60, left: 8, backgroundColor: '#22C55E', transform: [{ rotate: '30deg' }] }]} />
-                <View style={[styles.leaf, { top: 100, left: 5, backgroundColor: '#22C55E', transform: [{ rotate: '-20deg' }] }]} />
-                <View style={[styles.leaf, { top: 140, left: 10, backgroundColor: '#22C55E', transform: [{ rotate: '40deg' }] }]} />
+                {/* Right border flowers */}
+                <Flower petalColor="#3B82F6" centerColor="#F97316" size={22} top={45} right={5} />
+                <Flower petalColor="#22C55E" centerColor="#F97316" size={22} top={85} right={5} />
+                <Flower petalColor="#EAB308" centerColor="#F97316" size={22} top={125} right={5} />
                 
-                {/* Right side leaves */}
-                <View style={[styles.leaf, { top: 60, right: 8, backgroundColor: '#22C55E', transform: [{ rotate: '-30deg' }] }]} />
-                <View style={[styles.leaf, { top: 100, right: 5, backgroundColor: '#22C55E', transform: [{ rotate: '20deg' }] }]} />
-                <View style={[styles.leaf, { top: 140, right: 10, backgroundColor: '#22C55E', transform: [{ rotate: '-40deg' }] }]} />
+                {/* Bottom border flowers */}
+                <Flower petalColor="#EF4444" centerColor="#F97316" size={24} top={175} left={15} />
+                <Flower petalColor="#8B5CF6" centerColor="#F97316" size={24} top={175} left={80} />
+                <Flower petalColor="#4F46E5" centerColor="#F97316" size={24} top={175} left={145} />
+                <Flower petalColor="#3B82F6" centerColor="#F97316" size={24} top={175} left={210} />
+                <Flower petalColor="#22C55E" centerColor="#F97316" size={24} top={175} left={275} />
                 
-                {/* Left side middle pink flower */}
-                <View style={[styles.flowerPetal, { top: '45%', left: 8, backgroundColor: '#FF69B4' }]} />
-                <View style={[styles.flowerPetal, { top: '42%', left: 6, backgroundColor: '#FF69B4' }]} />
-                <View style={[styles.flowerPetal, { top: '42%', left: 10, backgroundColor: '#FF69B4' }]} />
-                <View style={[styles.flowerPetal, { top: '48%', left: 6, backgroundColor: '#FF69B4' }]} />
-                <View style={[styles.flowerPetal, { top: '48%', left: 10, backgroundColor: '#FF69B4' }]} />
-                <View style={[styles.flowerCenter, { top: '45%', left: 8, backgroundColor: '#FCD34D' }]} />
                 
-                {/* Right side middle orange flower */}
-                <View style={[styles.flowerPetal, { top: '45%', right: 8, backgroundColor: '#F97316' }]} />
-                <View style={[styles.flowerPetal, { top: '42%', right: 6, backgroundColor: '#F97316' }]} />
-                <View style={[styles.flowerPetal, { top: '42%', right: 10, backgroundColor: '#F97316' }]} />
-                <View style={[styles.flowerPetal, { top: '48%', right: 6, backgroundColor: '#F97316' }]} />
-                <View style={[styles.flowerPetal, { top: '48%', right: 10, backgroundColor: '#F97316' }]} />
-                <View style={[styles.flowerCenter, { top: '45%', right: 8, backgroundColor: '#FCD34D' }]} />
-                
-                {/* Left side lower purple flower */}
-                <View style={[styles.flowerPetal, { top: '65%', left: 10, backgroundColor: '#8B5CF6' }]} />
-                <View style={[styles.flowerPetal, { top: '62%', left: 8, backgroundColor: '#8B5CF6' }]} />
-                <View style={[styles.flowerPetal, { top: '62%', left: 12, backgroundColor: '#8B5CF6' }]} />
-                <View style={[styles.flowerPetal, { top: '68%', left: 8, backgroundColor: '#8B5CF6' }]} />
-                <View style={[styles.flowerPetal, { top: '68%', left: 12, backgroundColor: '#8B5CF6' }]} />
-                <View style={[styles.flowerCenter, { top: '65%', left: 10, backgroundColor: '#FCD34D' }]} />
-                
-                {/* Right side lower red flower */}
-                <View style={[styles.flowerPetal, { top: '65%', right: 10, backgroundColor: '#EF4444' }]} />
-                <View style={[styles.flowerPetal, { top: '62%', right: 8, backgroundColor: '#EF4444' }]} />
-                <View style={[styles.flowerPetal, { top: '62%', right: 12, backgroundColor: '#EF4444' }]} />
-                <View style={[styles.flowerPetal, { top: '68%', right: 8, backgroundColor: '#EF4444' }]} />
-                <View style={[styles.flowerPetal, { top: '68%', right: 12, backgroundColor: '#EF4444' }]} />
-                <View style={[styles.flowerCenter, { top: '65%', right: 10, backgroundColor: '#FCD34D' }]} />
-                
-                {/* Bottom flowers */}
-                <View style={[styles.flowerPetal, { bottom: 15, left: 25, backgroundColor: '#EF4444' }]} />
-                <View style={[styles.flowerPetal, { bottom: 10, left: 22, backgroundColor: '#EF4444' }]} />
-                <View style={[styles.flowerPetal, { bottom: 10, left: 28, backgroundColor: '#EF4444' }]} />
-                <View style={[styles.flowerPetal, { bottom: 20, left: 22, backgroundColor: '#EF4444' }]} />
-                <View style={[styles.flowerPetal, { bottom: 20, left: 28, backgroundColor: '#EF4444' }]} />
-                <View style={[styles.flowerCenter, { bottom: 15, left: 25, backgroundColor: '#FCD34D' }]} />
-                
-                <View style={[styles.flowerPetal, { bottom: 15, right: 25, backgroundColor: '#F97316' }]} />
-                <View style={[styles.flowerPetal, { bottom: 10, right: 22, backgroundColor: '#F97316' }]} />
-                <View style={[styles.flowerPetal, { bottom: 10, right: 28, backgroundColor: '#F97316' }]} />
-                <View style={[styles.flowerPetal, { bottom: 20, right: 22, backgroundColor: '#F97316' }]} />
-                <View style={[styles.flowerPetal, { bottom: 20, right: 28, backgroundColor: '#F97316' }]} />
-                <View style={[styles.flowerCenter, { bottom: 15, right: 25, backgroundColor: '#FCD34D' }]} />
               </View>
             )}
             {/* Shooting stars for galaxy theme (web only) */}
@@ -618,11 +692,16 @@ export default function TapeShellDesigner({
                 <View
                   style={[
                     styles.presetGradient,
-                    {
-                      background: Platform.OS === 'web' 
-                        ? `linear-gradient(135deg, ${preset.colors.join(', ')})`
-                        : preset.colors[0],
-                    },
+                    Platform.OS === 'web' 
+                      ? {
+                          background: `linear-gradient(135deg, ${preset.colors.join(', ')})`,
+                        }
+                      : {
+                          backgroundColor: preset.id === 'love' ? '#F5F5F5' 
+                            : preset.id === 'retro' ? '#5B7FD8'
+                            : preset.id === 'galaxy' ? '#1E1B4B'
+                            : '#EAB308', // flowers - yellow
+                        },
                     preset.id === 'galaxy' && Platform.OS === 'web' && {
                       background: `
                         radial-gradient(circle at 10% 15%, rgba(255, 255, 255, 0.9) 0.8px, transparent 0.8px),
@@ -663,7 +742,13 @@ export default function TapeShellDesigner({
                 >
                   {preset.id === 'love' && (
                     <View style={styles.loveHeartContainer}>
-                      <Text style={styles.loveHeartEmoji}>❤️</Text>
+                      {Platform.OS === 'web' ? (
+                        <Text style={styles.loveHeartEmoji}>❤️</Text>
+                      ) : (
+                        <View style={{ position: 'absolute', top: '40%', left: 0, right: 0, alignItems: 'center' }}>
+                          <HeartShape color="#8B0000" size={15} top={0} left={70} />
+                        </View>
+                      )}
                     </View>
                   )}
                   {preset.id === 'retro' && (
@@ -676,41 +761,10 @@ export default function TapeShellDesigner({
                   )}
                   {preset.id === 'flowers' && (
                     <View style={styles.flowersContainer}>
-                      {/* Top flowers */}
-                      <View style={[styles.flowerPetal, { top: 8, left: 8, backgroundColor: '#FF69B4' }]} />
-                      <View style={[styles.flowerPetal, { top: 5, left: 6, backgroundColor: '#FF69B4' }]} />
-                      <View style={[styles.flowerPetal, { top: 5, left: 10, backgroundColor: '#FF69B4' }]} />
-                      <View style={[styles.flowerPetal, { top: 11, left: 6, backgroundColor: '#FF69B4' }]} />
-                      <View style={[styles.flowerPetal, { top: 11, left: 10, backgroundColor: '#FF69B4' }]} />
-                      <View style={[styles.flowerCenter, { top: 8, left: 8, backgroundColor: '#FCD34D' }]} />
-                      
-                      <View style={[styles.flowerPetal, { top: 8, right: 8, backgroundColor: '#8B5CF6' }]} />
-                      <View style={[styles.flowerPetal, { top: 5, right: 6, backgroundColor: '#8B5CF6' }]} />
-                      <View style={[styles.flowerPetal, { top: 5, right: 10, backgroundColor: '#8B5CF6' }]} />
-                      <View style={[styles.flowerPetal, { top: 11, right: 6, backgroundColor: '#8B5CF6' }]} />
-                      <View style={[styles.flowerPetal, { top: 11, right: 10, backgroundColor: '#8B5CF6' }]} />
-                      <View style={[styles.flowerCenter, { top: 8, right: 8, backgroundColor: '#FCD34D' }]} />
-                      
-                      {/* Bottom flowers */}
-                      <View style={[styles.flowerPetal, { bottom: 8, left: 8, backgroundColor: '#EF4444' }]} />
-                      <View style={[styles.flowerPetal, { bottom: 5, left: 6, backgroundColor: '#EF4444' }]} />
-                      <View style={[styles.flowerPetal, { bottom: 5, left: 10, backgroundColor: '#EF4444' }]} />
-                      <View style={[styles.flowerPetal, { bottom: 11, left: 6, backgroundColor: '#EF4444' }]} />
-                      <View style={[styles.flowerPetal, { bottom: 11, left: 10, backgroundColor: '#EF4444' }]} />
-                      <View style={[styles.flowerCenter, { bottom: 8, left: 8, backgroundColor: '#FCD34D' }]} />
-                      
-                      <View style={[styles.flowerPetal, { bottom: 8, right: 8, backgroundColor: '#F97316' }]} />
-                      <View style={[styles.flowerPetal, { bottom: 5, right: 6, backgroundColor: '#F97316' }]} />
-                      <View style={[styles.flowerPetal, { bottom: 5, right: 10, backgroundColor: '#F97316' }]} />
-                      <View style={[styles.flowerPetal, { bottom: 11, right: 6, backgroundColor: '#F97316' }]} />
-                      <View style={[styles.flowerPetal, { bottom: 11, right: 10, backgroundColor: '#F97316' }]} />
-                      <View style={[styles.flowerCenter, { bottom: 8, right: 8, backgroundColor: '#FCD34D' }]} />
-                      
-                      {/* Center leaves */}
-                      <View style={[styles.leaf, { top: '30%', left: '10%', backgroundColor: '#22C55E', transform: [{ rotate: '30deg' }] }]} />
-                      <View style={[styles.leaf, { top: '30%', right: '10%', backgroundColor: '#22C55E', transform: [{ rotate: '-30deg' }] }]} />
-                      <View style={[styles.leaf, { bottom: '30%', left: '15%', backgroundColor: '#22C55E', transform: [{ rotate: '-20deg' }] }]} />
-                      <View style={[styles.leaf, { bottom: '30%', right: '15%', backgroundColor: '#22C55E', transform: [{ rotate: '20deg' }] }]} />
+                      {/* Single centered flower */}
+                      <View style={{ position: 'absolute', top: '50%', left: '50%', transform: [{ translateX: -25 }, { translateY: -25 }] }}>
+                        <Flower petalColor="#8B5CF6" centerColor="#F97316" size={50} top={0} left={0} />
+                      </View>
                     </View>
                   )}
                   {/* Shooting stars for galaxy preset preview (web only) */}
@@ -973,6 +1027,7 @@ const styles = StyleSheet.create({
     color: '#888',
     marginBottom: 12,
     letterSpacing: 1,
+    textAlign: 'center',
   },
   colorRow: {
     flexDirection: 'row',
@@ -1041,6 +1096,9 @@ const styles = StyleSheet.create({
     textShadowColor: 'rgba(0, 0, 0, 0.8)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
+    ...(Platform.OS === 'web' && {
+      fontSize: 18,
+    }),
   },
   buttonSection: {
     padding: 20,
