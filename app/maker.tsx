@@ -47,27 +47,19 @@ interface HoverableButtonProps {
 function HoverableButton({ onPress, style, textStyle, children, glowColor = '#d4b8ff' }: HoverableButtonProps) {
   const [isHovered, setIsHovered] = useState(false);
 
-  if (Platform.OS !== 'web') {
-    return (
-      <TouchableOpacity onPress={onPress} style={style}>
-        <Text style={textStyle}>{children}</Text>
-      </TouchableOpacity>
-    );
-  }
-
-  const webStyle = isHovered ? {
+  const webStyle = Platform.OS === 'web' && isHovered ? {
     boxShadow: `0 0 10px ${glowColor}, 0 0 15px ${glowColor}`,
     transition: 'box-shadow 0.3s ease-in-out',
-  } : {
+  } : Platform.OS === 'web' ? {
     transition: 'box-shadow 0.3s ease-in-out',
-  };
+  } : {};
 
   return (
     <TouchableOpacity
       onPress={onPress}
       style={[
         style,
-        isHovered && {
+        Platform.OS === 'web' && isHovered && {
           shadowColor: glowColor,
           shadowOffset: { width: 0, height: 0 },
           shadowOpacity: 0.5,
@@ -75,9 +67,11 @@ function HoverableButton({ onPress, style, textStyle, children, glowColor = '#d4
           elevation: 5,
         },
       ]}
-      // @ts-ignore - Web-specific props
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
+      {...(Platform.OS === 'web' && {
+        // @ts-ignore - Web-specific props
+        onMouseEnter: () => setIsHovered(true),
+        onMouseLeave: () => setIsHovered(false),
+      })}
       // @ts-ignore - Web-specific style
       {...(Platform.OS === 'web' && { style: [style, webStyle] })}
     >

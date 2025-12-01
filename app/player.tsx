@@ -20,8 +20,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
-import { useToast } from '../components';
-import TapeDeck from '../components/TapeDeck';
+import { FastForwardIcon, PauseIcon, PlayIcon, RewindIcon, useToast } from '../components';
 import { Mixtape } from '../models';
 import { PlaybackState } from '../models/PlaybackState';
 import { createMixtapeRepository } from '../repositories/adapters/StorageFactory';
@@ -215,88 +214,120 @@ export default function PlayerScreen() {
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={async () => {
-              await triggerLightHaptic();
-              navigateBack();
-            }}
-            accessibilityLabel="Go back"
-            accessibilityRole="button"
-          >
-            <Text style={styles.backButtonText}>← Back</Text>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={async () => {
+            await triggerLightHaptic();
+            navigateBack();
+          }}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+        >
+          <Text style={styles.backButtonText}>←</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle} accessibilityRole="header">
+          PLAYER MODE
+        </Text>
+        <TouchableOpacity
+          style={styles.menuButton}
+          onPress={async () => {
+            await triggerLightHaptic();
+          }}
+          accessibilityLabel="Menu"
+          accessibilityRole="button"
+        >
+          <Text style={styles.menuButtonText}>⋮</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Main Content - Centered Player */}
+      <View style={styles.mainContent}>
+        {/* Navigation Arrows and Title */}
+        <View style={styles.navigationSection}>
+          <TouchableOpacity style={styles.navArrow}>
+            <Text style={styles.navArrowText}>‹</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.exportButton}
-            onPress={async () => {
-              await triggerLightHaptic();
-              router.push(`/export?id=${mixtapeId}`);
-            }}
-            accessibilityLabel="Export mixtape"
-            accessibilityRole="button"
-          >
-            <Text style={styles.exportButtonText}>📤 Export</Text>
+          <Text style={styles.mixtapeTitle}>{mixtape.title}</Text>
+          <TouchableOpacity style={styles.navArrow}>
+            <Text style={styles.navArrowText}>›</Text>
           </TouchableOpacity>
         </View>
-        <Text
-          style={styles.headerTitle}
-          accessibilityRole="header"
-        >
-          {mixtape.title}
-        </Text>
-        <Text
-          style={styles.headerSubtitle}
-          accessibilityLabel={`Currently playing side ${playbackState.currentSide}`}
-        >
-          Side {playbackState.currentSide}
-        </Text>
+
+        {/* Player Shell */}
+        <View style={styles.playerShell}>
+          {/* Top Label/Button Area */}
+          <View style={styles.topLabelArea}>
+            <View style={styles.topLabel} />
+            {playbackState.isPlaying && Platform.OS === 'android' && (
+              <View style={styles.recordIndicatorGlowWrapper}>
+                <View style={styles.recordIndicatorGlowOuter} />
+              </View>
+            )}
+            <View
+              style={[
+                styles.recordIndicator,
+                playbackState.isPlaying && styles.recordIndicatorGlow,
+              ]}
+            />
+          </View>
+
+          {/* Deck Area with Reels */}
+          <View style={styles.deckArea}>
+            <View style={styles.reelsSection}>
+              <View style={styles.playerReel}>
+                <View style={styles.playerReelInner} />
+              </View>
+              <View style={styles.playerTape} />
+              <View style={styles.playerReel}>
+                <View style={styles.playerReelInner} />
+              </View>
+            </View>
+          </View>
+
+          {/* Bottom Control Area */}
+          <View style={styles.bottomControlArea}>
+            {/* Control Buttons */}
+            <View style={styles.controlButtons}>
+              <TouchableOpacity
+                style={styles.controlBtn}
+                onPressIn={handleRewindPress}
+                onPressOut={handleRewindRelease}
+                disabled={playbackState.isOverheated}
+              >
+                <RewindIcon size={50} backgroundColor="transparent" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.controlBtn, styles.mainControlBtn]}
+                onPress={playbackState.isPlaying ? handlePause : handlePlay}
+              >
+                {playbackState.isPlaying ? (
+                  <PauseIcon size={70} />
+                ) : (
+                  <PlayIcon size={70} />
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.controlBtn}
+                onPressIn={handleFastForwardPress}
+                onPressOut={handleFastForwardRelease}
+                disabled={playbackState.isOverheated}
+              >
+                <FastForwardIcon size={50} backgroundColor="transparent" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
       </View>
 
-      {/* Tape Deck */}
-      <View style={styles.deckContainer}>
-        <TapeDeck
-          theme={mixtape.theme}
-          playbackState={playbackState}
-          onPlay={handlePlay}
-          onPause={handlePause}
-          onFastForwardPress={handleFastForwardPress}
-          onFastForwardRelease={handleFastForwardRelease}
-          onRewindPress={handleRewindPress}
-          onRewindRelease={handleRewindRelease}
-          onFlipSide={handleFlipSide}
-        />
-      </View>
-
-      {/* Current Track Info (only shown in creation mode per requirements) */}
-      {/* Requirements: 1.4 - Track names hidden in playback mode */}
-      <View style={styles.infoContainer}>
-        <Text
-          style={styles.infoText}
-          accessibilityLabel={playbackState.isPlaying ? 'Playing' : 'Paused'}
-          accessibilityLiveRegion="polite"
-        >
-          {playbackState.isPlaying ? '▶ Playing' : '⏸ Paused'}
-        </Text>
-        {playbackState.isOverheated && (
-          <Text
-            style={styles.overheatText}
-            accessibilityLabel="Overheated, cooling down"
-            accessibilityLiveRegion="assertive"
-          >
-            🔥 Overheated - Cooling down...
-          </Text>
-        )}
-        {playbackState.glitchMode && (
-          <Text
-            style={styles.glitchText}
-            accessibilityLabel="Glitch mode active"
-            accessibilityLiveRegion="assertive"
-          >
-            👻 Glitch Mode Active
-          </Text>
-        )}
-      </View>
+      {/* Status Info */}
+      {playbackState.isOverheated && (
+        <Text style={styles.statusText}>🔥 Cooling down...</Text>
+      )}
+      {playbackState.glitchMode && (
+        <Text style={styles.statusText}>👻 Glitch Mode</Text>
+      )}
     </View>
   );
 }
@@ -304,47 +335,44 @@ export default function PlayerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#000000',
   },
   header: {
-    padding: 20,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    backgroundColor: '#2a2a2a',
-    borderBottomWidth: 1,
-    borderBottomColor: '#3a3a3a',
-  },
-  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 16,
+    alignItems: 'center',
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
   },
   backButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'flex-start',
   },
   backButtonText: {
-    fontSize: 16,
-    color: '#4a9eff',
-    fontWeight: '600',
+    fontSize: 32,
+    color: '#c084fc',
+    fontWeight: '300',
   },
-  exportButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+  menuButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
   },
-  exportButtonText: {
-    fontSize: 16,
-    color: '#34d399',
+  menuButtonText: {
+    fontSize: 32,
+    color: '#c084fc',
     fontWeight: '600',
   },
   headerTitle: {
-    fontSize: 28,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#ffffff',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#888888',
+    color: '#c084fc',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
   },
   loadingContainer: {
     flex: 1,
@@ -356,32 +384,187 @@ const styles = StyleSheet.create({
     color: '#888888',
     marginTop: 16,
   },
-  deckContainer: {
+  mainContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 20,
   },
-  infoContainer: {
+  navigationSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+    width: '100%',
+  },
+  navArrow: {
+    padding: 12,
+  },
+  navArrowText: {
+    fontSize: 32,
+    color: '#4a4a4a',
+    fontWeight: '300',
+  },
+  mixtapeTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginHorizontal: 20,
+    textAlign: 'center',
+  },
+  playerShell: {
+    width: '100%',
+    maxWidth: 450,
+    backgroundColor: '#b794f6',
+    borderRadius: 24,
     padding: 20,
-    backgroundColor: '#2a2a2a',
-    borderTopWidth: 1,
-    borderTopColor: '#3a3a3a',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.4,
+        shadowRadius: 16,
+      },
+      android: {
+        elevation: 12,
+      },
+    }),
+  },
+  topLabelArea: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  topLabel: {
+    flex: 1,
+    height: 50,
+    backgroundColor: '#4E9E9A',
+    borderRadius: 25,
+    marginRight: 12,
+  },
+  recordIndicator: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#ef4444',
+    zIndex: 2,
+  },
+  recordIndicatorGlowWrapper: {
+    position: 'absolute',
+    right: -12,
+    top: 4,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1,
+  },
+  recordIndicatorGlowOuter: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(239, 68, 68, 0.4)',
+  },
+  recordIndicatorGlow: {
+    ...Platform.select({
+      ios: {
+        shadowColor: '#ef4444',
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 1,
+        shadowRadius: 16,
+      },
+      android: {
+        // Android uses the wrapper view for glow effect
+      },
+      web: {
+        boxShadow:
+          '0 0 24px 8px rgba(239, 68, 68, 1), 0 0 12px 4px rgba(239, 68, 68, 0.8)',
+      },
+    }),
+  },
+  deckArea: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+  },
+  reelsSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  playerReel: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#f5f5f5',
+    borderWidth: 4,
+    borderColor: '#d5d5d5',
+    justifyContent: 'center',
     alignItems: 'center',
   },
-  infoText: {
-    fontSize: 16,
+  playerReelInner: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#1a1a1a',
+  },
+  playerTape: {
+    flex: 1,
+    height: 6,
+    backgroundColor: '#4a9eff',
+    marginHorizontal: 16,
+  },
+  bottomControlArea: {
+    backgroundColor: '#7c6ba8',
+    borderRadius: 12,
+    padding: 16,
+  },
+  controlButtons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 20,
+  },
+  controlBtn: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'transparent',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  controlBtnText: {
+    fontSize: 24,
     color: '#ffffff',
-    marginBottom: 8,
   },
-  overheatText: {
-    fontSize: 14,
-    color: '#ff6b6b',
-    fontWeight: '600',
+  mainControlBtn: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#4E9E9A',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  glitchText: {
+  mainControlBtnText: {
+    fontSize: 32,
+    color: '#000000',
+    textAlign: 'center',
+    ...Platform.select({
+      android: {
+        lineHeight: 32,
+        includeFontPadding: false,
+        textAlignVertical: 'center',
+      },
+    }),
+  },
+  statusText: {
     fontSize: 14,
-    color: '#7c3aed',
-    fontWeight: '600',
+    color: '#888888',
+    textAlign: 'center',
+    marginTop: 16,
   },
 });

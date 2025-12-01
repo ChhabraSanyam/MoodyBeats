@@ -20,7 +20,7 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import { EnvelopeIntro } from '../components';
+import { Button, EnvelopeIntro } from '../components';
 import { Mixtape } from '../models';
 import { createAudioRepository, createMixtapeRepository } from '../repositories/adapters/StorageFactory';
 import { ArchiveManager } from '../services/ArchiveManager';
@@ -383,12 +383,25 @@ export default function MixtapeLibraryScreen() {
             style={[
               styles.themeColor,
               {
-                backgroundColor:
-                  mixtape.theme.preset === 'pumpkin-orange'
-                    ? '#FF8C42'
-                    : mixtape.theme.preset === 'ghostly-green'
-                    ? '#7FFF7F'
-                    : '#808080',
+                backgroundColor: (() => {
+                  // Use custom color if available
+                  if (mixtape.theme.customShellColor) {
+                    return mixtape.theme.customShellColor;
+                  }
+                  // Use pattern color if available (this is the shell color)
+                  if (mixtape.theme.pattern) {
+                    return mixtape.theme.pattern;
+                  }
+                  // Fallback based on preset
+                  if (mixtape.theme.preset === 'pumpkin-orange') {
+                    return '#5B7FD8'; // Retro - blue
+                  }
+                  if (mixtape.theme.preset === 'ghostly-green') {
+                    return '#1E1B4B'; // Galaxy - dark purple
+                  }
+                  // Default for vhs-static-grey (could be love or flowers)
+                  return '#F5F5DC'; // Love - beige
+                })(),
               },
             ]}
           />
@@ -413,28 +426,29 @@ export default function MixtapeLibraryScreen() {
 
       {/* Actions */}
       <View style={styles.cardActions}>
-        <TouchableOpacity
-          style={styles.actionButton}
+        <Button
+          title="▶ Play"
+          variant="primary"
+          size="small"
           onPress={() => router.push(`/player?id=${mixtape.id}`)}
-        >
-          <Text style={styles.actionButtonText}>▶ Play</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => router.push(`/export?id=${mixtape.id}`)}
-        >
-          <Text style={styles.actionButtonText}>📤 Export</Text>
-        </TouchableOpacity>
+        />
         
-        <TouchableOpacity
-          style={[styles.actionButton, styles.deleteButton]}
+        <Button
+          title="📤 Export"
+          variant="secondary"
+          size="small"
+          onPress={() => router.push(`/export?id=${mixtape.id}`)}
+          style={styles.actionButton}
+        />
+        
+        <Button
+          title="🗑 Delete"
+          variant="delete"
+          size="small"
           onPress={() => handleDeleteMixtape(mixtape.id, mixtape.title)}
-        >
-          <Text style={[styles.actionButtonText, styles.deleteButtonText]}>
-            🗑 Delete
-          </Text>
-        </TouchableOpacity>
+          style={styles.actionButton}
+        />
       </View>
     </View>
   ), [formatDate, hasLocalFiles, router]);
@@ -448,12 +462,11 @@ export default function MixtapeLibraryScreen() {
       <Text style={styles.emptyStateSubtext}>
         Create your first mixtape to get started
       </Text>
-      <TouchableOpacity
-        style={styles.createButton}
+      <Button
+        title="Create Mixtape"
+        variant="primary"
         onPress={() => router.push('/maker')}
-      >
-        <Text style={styles.createButtonText}>Create Mixtape</Text>
-      </TouchableOpacity>
+      />
     </View>
   ), [router]);
 
@@ -550,49 +563,39 @@ export default function MixtapeLibraryScreen() {
                 autoCorrect={false}
                 editable={!isImporting}
               />
-              <TouchableOpacity
-                style={[
-                  styles.importButton,
-                  isImporting && styles.importButtonDisabled,
-                ]}
+              <Button
+                title={isImporting ? 'Importing...' : 'Import from URL'}
+                variant="primary"
                 onPress={handleImportFromURL}
                 disabled={isImporting}
-              >
-                <Text style={styles.importButtonText}>
-                  {isImporting ? 'Importing...' : 'Import from URL'}
-                </Text>
-              </TouchableOpacity>
+                fullWidth
+              />
             </View>
 
             {/* File Import */}
             <View style={styles.importSection}>
               <Text style={styles.importSectionTitle}>From File</Text>
-              <TouchableOpacity
-                style={[
-                  styles.importButton,
-                  styles.secondaryImportButton,
-                  isImporting && styles.importButtonDisabled,
-                ]}
+              <Button
+                title="Choose .mixblues File"
+                variant="secondary"
                 onPress={handleImportFromFile}
                 disabled={isImporting}
-              >
-                <Text style={styles.importButtonText}>
-                  Choose .mixblues File
-                </Text>
-              </TouchableOpacity>
+                fullWidth
+              />
             </View>
 
             {/* Close Button */}
-            <TouchableOpacity
-              style={styles.closeButton}
+            <Button
+              title="Cancel"
+              variant="secondary"
               onPress={() => {
                 setShowImportModal(false);
                 setImportUrl('');
               }}
               disabled={isImporting}
-            >
-              <Text style={styles.closeButtonText}>Cancel</Text>
-            </TouchableOpacity>
+              fullWidth
+              style={styles.closeButton}
+            />
           </View>
         </View>
       </Modal>
@@ -614,19 +617,19 @@ export default function MixtapeLibraryScreen() {
             </Text>
 
             <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.importButton, styles.secondaryImportButton]}
+              <Button
+                title="Cancel"
+                variant="secondary"
                 onPress={cancelDelete}
-              >
-                <Text style={styles.importButtonText}>Cancel</Text>
-              </TouchableOpacity>
+                style={styles.modalButton}
+              />
 
-              <TouchableOpacity
-                style={[styles.importButton, styles.deleteConfirmButton]}
+              <Button
+                title="Delete"
+                variant="delete"
                 onPress={confirmDelete}
-              >
-                <Text style={styles.importButtonText}>Delete</Text>
-              </TouchableOpacity>
+                style={styles.modalButton}
+              />
             </View>
           </View>
         </View>
@@ -736,17 +739,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
   },
-  createButton: {
-    backgroundColor: '#4a9eff',
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  createButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   mixtapeCard: {
     backgroundColor: '#2a2a2a',
     borderRadius: 12,
@@ -790,9 +782,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   warningBanner: {
-    backgroundColor: '#3a2a1a',
+    backgroundColor: 'rgba(78, 158, 154, 0.15)',
     borderLeftWidth: 3,
-    borderLeftColor: '#ff9800',
+    borderLeftColor: '#4E9E9A',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 4,
@@ -800,7 +792,7 @@ const styles = StyleSheet.create({
   },
   warningText: {
     fontSize: 12,
-    color: '#ffb74d',
+    color: '#4E9E9A',
     fontWeight: '500',
   },
   notePreview: {
@@ -816,25 +808,6 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    backgroundColor: '#3a3a3a',
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#4a4a4a',
-  },
-  actionButtonText: {
-    color: '#ffffff',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  deleteButton: {
-    backgroundColor: '#2a2a2a',
-    borderColor: '#ff6b6b',
-  },
-  deleteButtonText: {
-    color: '#ff6b6b',
   },
   importFab: {
     position: 'absolute',
@@ -902,41 +875,15 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     marginBottom: 12,
   },
-  importButton: {
-    backgroundColor: '#7c3aed',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  secondaryImportButton: {
-    backgroundColor: '#3a3a3a',
-    borderWidth: 1,
-    borderColor: '#4a4a4a',
-  },
-  importButtonDisabled: {
-    opacity: 0.5,
-  },
-  importButtonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  deleteConfirmButton: {
-    backgroundColor: '#ff6b6b',
-  },
   modalButtons: {
     flexDirection: 'row',
     gap: 12,
     marginTop: 8,
   },
-  closeButton: {
-    paddingVertical: 12,
-    alignItems: 'center',
+  modalButton: {
+    flex: 1,
   },
-  closeButtonText: {
-    color: '#888888',
-    fontSize: 16,
-    fontWeight: '600',
+  closeButton: {
+    marginTop: 8,
   },
 });
