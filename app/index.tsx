@@ -1,5 +1,6 @@
 import { useRouter } from "expo-router";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { Button } from "../components";
 import { triggerLightHaptic } from "../utils/haptics";
 
 export default function Index() {
@@ -32,25 +33,21 @@ export default function Index() {
       </Text>
       
       <View style={styles.buttonContainer}>
-        <TouchableOpacity
-          style={styles.button}
+        <Button
+          title="Create Mixtape"
+          variant="primary"
+          size="large"
           onPress={handleCreateMixtape}
-          accessibilityLabel="Create new mixtape"
-          accessibilityRole="button"
-          accessibilityHint="Navigate to mixtape creation screen"
-        >
-          <Text style={styles.buttonText}>Create Mixtape</Text>
-        </TouchableOpacity>
+          fullWidth
+        />
         
-        <TouchableOpacity
-          style={[styles.button, styles.secondaryButton]}
+        <Button
+          title="My Library"
+          variant="secondary"
+          size="large"
           onPress={handleMyLibrary}
-          accessibilityLabel="View my library"
-          accessibilityRole="button"
-          accessibilityHint="Navigate to mixtape library screen"
-        >
-          <Text style={styles.buttonText}>My Library</Text>
-        </TouchableOpacity>
+          fullWidth
+        />
       </View>
     </View>
   );
@@ -79,22 +76,5 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 300,
     gap: 16,
-  },
-  button: {
-    backgroundColor: '#4a9eff',
-    paddingHorizontal: 32,
-    paddingVertical: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  secondaryButton: {
-    backgroundColor: '#3a3a3a',
-    borderWidth: 1,
-    borderColor: '#4a4a4a',
-  },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 18,
-    fontWeight: '600',
   },
 });

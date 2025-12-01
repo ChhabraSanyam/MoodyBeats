@@ -20,6 +20,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import Svg, { Circle, Polygon, Rect } from 'react-native-svg';
 import { useToast } from '../components';
 import { Mixtape } from '../models';
 import { PlaybackState } from '../models/PlaybackState';
@@ -258,15 +259,21 @@ export default function PlayerScreen() {
           {/* Top Label/Button Area */}
           <View style={styles.topLabelArea}>
             <View style={styles.topLabel} />
-            {playbackState.isPlaying && Platform.OS === 'android' && (
-              <View style={styles.recordIndicatorGlowWrapper}>
-                <View style={styles.recordIndicatorGlowOuter} />
-              </View>
-            )}
+            {playbackState.isPlaying &&
+              !playbackState.isRewinding &&
+              !playbackState.isFastForwarding &&
+              Platform.OS === 'android' && (
+                <View style={styles.recordIndicatorGlowWrapper}>
+                  <View style={styles.recordIndicatorGlowOuter} />
+                </View>
+              )}
             <View
               style={[
                 styles.recordIndicator,
-                playbackState.isPlaying && styles.recordIndicatorGlow,
+                playbackState.isPlaying &&
+                  !playbackState.isRewinding &&
+                  !playbackState.isFastForwarding &&
+                  styles.recordIndicatorGlow,
               ]}
             />
           </View>
@@ -290,31 +297,64 @@ export default function PlayerScreen() {
           <View style={styles.bottomControlArea}>
             {/* Control Buttons */}
             <View style={styles.controlButtons}>
+              {/* Rewind Button */}
               <TouchableOpacity
                 style={styles.controlBtn}
                 onPressIn={handleRewindPress}
                 onPressOut={handleRewindRelease}
                 disabled={playbackState.isOverheated}
+                activeOpacity={0.7}
+                delayPressIn={0}
               >
-                <Text style={styles.controlBtnText}>⏪</Text>
+                <Svg width="40" height="40" viewBox="0 0 24 24">
+                  <Circle cx="12" cy="12" r="10" fill="#4E9E9A" />
+                  <Polygon points="14.5,7 10.5,12 14.5,17" fill="white" />
+                  <Polygon points="10.5,7 6.5,12 10.5,17" fill="white" />
+                </Svg>
               </TouchableOpacity>
 
+              {/* Play/Pause Button */}
               <TouchableOpacity
                 style={[styles.controlBtn, styles.mainControlBtn]}
-                onPress={playbackState.isPlaying ? handlePause : handlePlay}
+                onPress={
+                  playbackState.isPlaying &&
+                  !playbackState.isRewinding &&
+                  !playbackState.isFastForwarding
+                    ? handlePause
+                    : handlePlay
+                }
+                disabled={
+                  playbackState.isRewinding || playbackState.isFastForwarding
+                }
               >
-                <Text style={styles.mainControlBtnText}>
-                  {playbackState.isPlaying ? '⏸' : '▶'}
-                </Text>
+                {playbackState.isPlaying &&
+                !playbackState.isRewinding &&
+                !playbackState.isFastForwarding ? (
+                  <Svg width="28" height="28" viewBox="0 0 24 24">
+                    <Rect x="6" y="4" width="4" height="16" fill="#000000" />
+                    <Rect x="14" y="4" width="4" height="16" fill="#000000" />
+                  </Svg>
+                ) : (
+                  <Svg width="28" height="28" viewBox="0 0 24 24">
+                    <Polygon points="8,5 8,19 19,12" fill="#000000" />
+                  </Svg>
+                )}
               </TouchableOpacity>
 
+              {/* Fast Forward Button */}
               <TouchableOpacity
                 style={styles.controlBtn}
                 onPressIn={handleFastForwardPress}
                 onPressOut={handleFastForwardRelease}
                 disabled={playbackState.isOverheated}
+                activeOpacity={0.7}
+                delayPressIn={0}
               >
-                <Text style={styles.controlBtnText}>⏩</Text>
+                <Svg width="40" height="40" viewBox="0 0 24 24">
+                  <Circle cx="12" cy="12" r="10" fill="#4E9E9A" />
+                  <Polygon points="9.5,7 13.5,12 9.5,17" fill="white" />
+                  <Polygon points="13.5,7 17.5,12 13.5,17" fill="white" />
+                </Svg>
               </TouchableOpacity>
             </View>
           </View>
@@ -552,39 +592,53 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 20,
+    gap: 40,
+    height: 70,
   },
   controlBtn: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: 'transparent',
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 8,
   },
   controlBtnText: {
     fontSize: 24,
     color: '#ffffff',
   },
   mainControlBtn: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: '#4E9E9A',
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: -5,
   },
   mainControlBtnText: {
-    fontSize: 32,
+    fontSize: 28,
     color: '#000000',
     textAlign: 'center',
     ...Platform.select({
       android: {
-        lineHeight: 32,
+        lineHeight: 28,
         includeFontPadding: false,
         textAlignVertical: 'center',
       },
     }),
+  },
+  svgPlaceholder: {
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    fontSize: 10,
+    color: '#ffffff',
+    fontWeight: 'bold',
   },
   statusText: {
     fontSize: 14,
