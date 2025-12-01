@@ -49,5 +49,3 @@ coverage/
 *.log
 *.lock
 !package-lock.json
-
-.vscode
