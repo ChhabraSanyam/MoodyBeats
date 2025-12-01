@@ -662,17 +662,25 @@ export default function MixtapeCreatorScreen() {
       >
         <View style={styles.themeDesignerContainer}>
           <View style={styles.themeDesignerHeader}>
-            <Text style={styles.themeDesignerTitle}>Tape Shell Designer</Text>
             <TouchableOpacity
-              style={styles.themeDesignerCloseButton}
+              style={styles.backButton}
               onPress={() => setShowThemeDesigner(false)}
             >
-              <Text style={styles.themeDesignerCloseButtonText}>Done</Text>
+              <Text style={styles.backButtonText}>←</Text>
             </TouchableOpacity>
+            <Text style={styles.themeDesignerTitle}>Create Your Mixtape</Text>
           </View>
           <TapeShellDesigner
             theme={tapeTheme}
             onThemeChange={setTapeTheme}
+            mixtapeTitle={mixtapeTitle || 'Untitled Mixtape'}
+            onChangeSongs={() => setShowThemeDesigner(false)}
+            onSave={async () => {
+              await persistMixtape();
+              setShowThemeDesigner(false);
+              showToast('Mixtape saved!', 'success');
+              router.push('/library');
+            }}
           />
         </View>
       </Modal>
@@ -705,7 +713,7 @@ const styles = StyleSheet.create({
     color: '#ffffff',
   },
   headerTitle: {
-    fontSize: 24,
+    fontSize: 28,
     fontFamily: 'Staatliches',
     color: '#ffffff',
     marginLeft: 8,
@@ -723,7 +731,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   label: {
-    fontSize: 18,
+    fontSize: 22,
     fontFamily: 'Staatliches',
     color: '#888',
     marginBottom: 8,
@@ -775,7 +783,7 @@ const styles = StyleSheet.create({
     color: '#1a1a1a',
   },
   sideLabel: {
-    fontSize: 20,
+    fontSize: 24,
     fontFamily: 'Staatliches',
     color: '#888',
     marginBottom: 12,
@@ -945,6 +953,9 @@ const styles = StyleSheet.create({
     fontFamily: 'Staatliches',
     color: '#ffffff',
     letterSpacing: 1,
+    flex: 1,
+    textAlign: 'center',
+    marginRight: 48, // Balance the back button width
   },
   themeDesignerCloseButton: {
     backgroundColor: '#b794f6',
