@@ -20,7 +20,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
-import { FastForwardIcon, PauseIcon, PlayIcon, RewindIcon, useToast } from '../components';
+import { useToast } from '../components';
 import { Mixtape } from '../models';
 import { PlaybackState } from '../models/PlaybackState';
 import { createMixtapeRepository } from '../repositories/adapters/StorageFactory';
@@ -282,6 +282,8 @@ export default function PlayerScreen() {
                 <View style={styles.playerReelInner} />
               </View>
             </View>
+            {/* Glass Effect Overlay */}
+            <View style={styles.glassOverlay} />
           </View>
 
           {/* Bottom Control Area */}
@@ -294,18 +296,16 @@ export default function PlayerScreen() {
                 onPressOut={handleRewindRelease}
                 disabled={playbackState.isOverheated}
               >
-                <RewindIcon size={50} backgroundColor="transparent" />
+                <Text style={styles.controlBtnText}>⏪</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.controlBtn, styles.mainControlBtn]}
                 onPress={playbackState.isPlaying ? handlePause : handlePlay}
               >
-                {playbackState.isPlaying ? (
-                  <PauseIcon size={70} />
-                ) : (
-                  <PlayIcon size={70} />
-                )}
+                <Text style={styles.mainControlBtnText}>
+                  {playbackState.isPlaying ? '⏸' : '▶'}
+                </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -314,7 +314,7 @@ export default function PlayerScreen() {
                 onPressOut={handleFastForwardRelease}
                 disabled={playbackState.isOverheated}
               >
-                <FastForwardIcon size={50} backgroundColor="transparent" />
+                <Text style={styles.controlBtnText}>⏩</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -444,6 +444,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#4E9E9A',
     borderRadius: 25,
     marginRight: 12,
+    borderWidth: 5,
+    borderColor: '#800080',
   },
   recordIndicator: {
     width: 16,
@@ -490,11 +492,34 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
+    position: 'relative',
+    overflow: 'hidden',
   },
   reelsSection: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  glassOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 16,
+    ...Platform.select({
+      web: {
+        backdropFilter: 'blur(2px)',
+        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 50%, rgba(255, 255, 255, 0.08) 100%)',
+      },
+      ios: {
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+      },
+      android: {
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+      },
+    }),
   },
   playerReel: {
     width: 80,

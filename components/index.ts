@@ -7,7 +7,6 @@ export { default as EnvelopeCustomizer } from './EnvelopeCustomizer';
 export { default as EnvelopeIntro } from './EnvelopeIntro';
 export { ErrorBoundary } from './ErrorBoundary';
 export { LoadingOverlay } from './LoadingOverlay';
-export * from './PlayerIcons';
 export { default as ReelAnimation } from './ReelAnimation';
 export { default as TapeDeck } from './TapeDeck';
 export { default as TapeDisplay } from './TapeDisplay';
