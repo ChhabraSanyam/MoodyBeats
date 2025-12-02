@@ -369,7 +369,7 @@ export default function MixtapeExportScreen() {
     return (
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color="#4a9eff" />
+          <ActivityIndicator size="large" color="#B28EF1" />
           <Text style={styles.loadingText}>Loading mixtape...</Text>
         </View>
       </View>
@@ -401,12 +401,6 @@ export default function MixtapeExportScreen() {
       </View>
 
       <ScrollView style={styles.scrollContainer}>
-        {/* Mixtape Info */}
-        <View style={styles.infoSection}>
-          <Text style={styles.infoTitle}>Mixtape Details</Text>
-          <Text style={styles.infoText}>Theme: {mixtape.theme.preset}</Text>
-        </View>
-
         {/* Note Input - Requirements: 3.3 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Add a Note (Optional)</Text>
@@ -485,7 +479,7 @@ export default function MixtapeExportScreen() {
 
           {exportState === 'exporting' && (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color="#4a9eff" />
+              <ActivityIndicator size="large" color="#B28EF1" />
               <Text style={styles.loadingText}>Exporting mixtape...</Text>
             </View>
           )}
@@ -544,12 +538,12 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 16,
-    color: '#4a9eff',
+    color: '#B28EF1',
     fontWeight: '600',
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontFamily: 'Staatliches',
     color: '#ffffff',
     marginBottom: 4,
   },
@@ -560,23 +554,6 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flex: 1,
   },
-  infoSection: {
-    padding: 20,
-    backgroundColor: '#2a2a2a',
-    borderBottomWidth: 1,
-    borderBottomColor: '#3a3a3a',
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ffffff',
-    marginBottom: 8,
-  },
-  infoText: {
-    fontSize: 14,
-    color: '#aaaaaa',
-    marginBottom: 4,
-  },
   section: {
     padding: 20,
     borderBottomWidth: 1,
@@ -584,7 +561,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontFamily: 'Staatliches',
     color: '#ffffff',
     marginBottom: 8,
   },
@@ -595,8 +572,8 @@ const styles = StyleSheet.create({
   },
   noteInput: {
     backgroundColor: '#2a2a2a',
-    borderWidth: 1,
-    borderColor: '#3a3a3a',
+    borderWidth: 2,
+    borderColor: '#B28EF1',
     borderRadius: 8,
     padding: 16,
     fontSize: 15,
@@ -614,7 +591,7 @@ const styles = StyleSheet.create({
   },
   exportButton: {
     flexDirection: 'row',
-    backgroundColor: '#4a9eff',
+    backgroundColor: '#B28EF1',
     borderRadius: 12,
     padding: 20,
     marginBottom: 16,
@@ -685,11 +662,11 @@ const styles = StyleSheet.create({
   },
   urlText: {
     fontSize: 13,
-    color: '#4a9eff',
+    color: '#B28EF1',
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
   doneButton: {
-    backgroundColor: '#4a9eff',
+    backgroundColor: '#B28EF1',
     paddingHorizontal: 32,
     paddingVertical: 12,
     borderRadius: 8,

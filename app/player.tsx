@@ -409,7 +409,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontFamily: 'Staatliches',
     color: '#c084fc',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
@@ -447,7 +447,7 @@ const styles = StyleSheet.create({
   },
   mixtapeTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontFamily: 'Staatliches',
     color: '#ffffff',
     textTransform: 'uppercase',
     letterSpacing: 1,

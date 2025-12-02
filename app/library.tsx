@@ -435,7 +435,7 @@ export default function MixtapeLibraryScreen() {
         />
         
         <Button
-          title="📤 Export"
+          title="📤 Share"
           variant="secondary"
           size="small"
           onPress={() => router.push(`/export?id=${mixtape.id}`)}
@@ -693,7 +693,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontFamily: 'Staatliches',
     color: '#ffffff',
     marginBottom: 4,
   },
@@ -758,7 +758,7 @@ const styles = StyleSheet.create({
   },
   mixtapeTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontFamily: 'Staatliches',
     color: '#ffffff',
     marginBottom: 4,
   },
@@ -847,7 +847,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontFamily: 'Staatliches',
     color: '#ffffff',
     marginBottom: 8,
   },
