@@ -29,6 +29,7 @@ export interface TapeTheme {
 export interface EnvelopeCustomization {
   color: string;
   sigil?: string;
+  signature?: string;
 }
 
 export interface Mixtape {

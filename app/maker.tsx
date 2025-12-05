@@ -1,45 +1,141 @@
 /**
- * Mixtape Creator Screen (Maker Mode)
- * Requirements: 1.1, 1.2, 1.3, 2.1, 2.2, 2.3, 2.4, 2.5
+ * Redesigned Mixtape Creator Screen
+ * Modern UI with drag-and-drop functionality
  */
 
 import * as DocumentPicker from 'expo-document-picker';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-    Alert,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  ViewStyle,
+  TextStyle,
 } from 'react-native';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 import { LoadingOverlay, useToast } from '../components';
 import TapeShellDesigner from '../components/TapeShellDesigner';
-import TrackList from '../components/TrackList';
 import { AudioSource, Mixtape, TapeTheme, Track } from '../models';
 import { createAudioRepository, createMixtapeRepository } from '../repositories/adapters/StorageFactory';
 import { validateAudioSource, validateAudioUrl } from '../repositories/utils/audioValidation';
 import {
-    triggerErrorHaptic,
-    triggerLightHaptic,
-    triggerSuccessHaptic,
+  triggerErrorHaptic,
+  triggerLightHaptic,
+  triggerSuccessHaptic,
 } from '../utils/haptics';
+
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
+
+// Hoverable Button Component for Web
+interface HoverableButtonProps {
+  onPress: () => void;
+  style?: ViewStyle | ViewStyle[];
+  textStyle?: TextStyle | TextStyle[];
+  children: React.ReactNode;
+  glowColor?: string;
+  disabled?: boolean;
+}
+
+function HoverableButton({ onPress, style, textStyle, children, glowColor = '#d4b8ff', disabled = false }: HoverableButtonProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  const webStyle = Platform.OS === 'web' && isHovered ? {
+    boxShadow: `0 0 10px ${glowColor}, 0 0 15px ${glowColor}`,
+    transition: 'box-shadow 0.3s ease-in-out',
+  } : Platform.OS === 'web' ? {
+    transition: 'box-shadow 0.3s ease-in-out',
+  } : {};
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={disabled}
+      style={[
+        style,
+        Platform.OS === 'web' && isHovered && {
+          shadowColor: glowColor,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.5,
+          shadowRadius: 8,
+          elevation: 5,
+        },
+      ]}
+      {...(Platform.OS === 'web' && {
+        // @ts-ignore - Web-specific props
+        onMouseEnter: () => setIsHovered(true),
+        onMouseLeave: () => setIsHovered(false),
+      })}
+      // @ts-ignore - Web-specific style
+      {...(Platform.OS === 'web' && { style: [style, webStyle] })}
+    >
+      <Text style={textStyle}>{children}</Text>
+    </TouchableOpacity>
+  );
+}
+
+const MAX_TAPE_DURATION = 30 * 60; // 30 minutes in seconds
+
+// Track Item Component
+interface DraggableTrackProps {
+  track: Track;
+  index: number;
+  side: 'A' | 'B';
+  onRemove: (trackId: string, side: 'A' | 'B') => void;
+  onMove: (track: Track, fromSide: 'A' | 'B', fromIndex: number, toSide: 'A' | 'B') => void;
+}
+
+function DraggableTrack({ track, index, side, onRemove, onMove }: DraggableTrackProps) {
+  const handleMoveToOtherSide = async () => {
+    const targetSide = side === 'A' ? 'B' : 'A';
+    console.log(`Arrow button clicked: Moving "${track.title}" from Side ${side} to Side ${targetSide}`);
+    await triggerLightHaptic();
+    
+    // Directly call the move handler
+    onMove(track, side, index, targetSide);
+  };
+
+  return (
+    <View style={styles.trackItem}>
+      {/* Move button on left for both web and mobile */}
+      <TouchableOpacity
+        style={styles.moveButtonLeft}
+        onPress={handleMoveToOtherSide}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.moveButtonText}>{side === 'A' ? '↓' : '↑'}</Text>
+      </TouchableOpacity>
+      
+      <Text style={styles.trackTitle} numberOfLines={1}>
+        {track.title}
+      </Text>
+      
+      <TouchableOpacity
+        style={styles.deleteButton}
+        onPress={() => onRemove(track.id, side)}
+      >
+        <Text style={styles.deleteButtonText}>🗑</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
 
 export default function MixtapeCreatorScreen() {
   const router = useRouter();
   const { showToast } = useToast();
-  const [trackPool, setTrackPool] = useState<Track[]>([]);
   const [sideA, setSideA] = useState<Track[]>([]);
   const [sideB, setSideB] = useState<Track[]>([]);
   const [mixtapeTitle, setMixtapeTitle] = useState('');
   const [currentMixtapeId, setCurrentMixtapeId] = useState<string>('');
-  const [showUrlModal, setShowUrlModal] = useState(false);
-  const [urlInput, setUrlInput] = useState('');
-  const [isUrlValid, setIsUrlValid] = useState(false);
+  const [trackInput, setTrackInput] = useState('');
   const [showThemeDesigner, setShowThemeDesigner] = useState(false);
   const [tapeTheme, setTapeTheme] = useState<TapeTheme>({
     preset: 'vhs-static-grey',
@@ -50,12 +146,12 @@ export default function MixtapeCreatorScreen() {
   const mixtapeRepo = createMixtapeRepository();
   const audioRepo = createAudioRepository();
 
-  /**
-   * Generate a unique UUID for the mixtape
-   * Requirements: 3.1
-   */
+  // Load Staatliches font
+  const [fontsLoaded, fontError] = useFonts({
+    'Staatliches': require('../assets/fonts/Staatliches-Regular.ttf'),
+  });
+
   const generateMixtapeId = (): string => {
-    // Generate UUID v4 using a simple UUID generator
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
       const r = (Math.random() * 16) | 0;
       const v = c === 'x' ? r : (r & 0x3) | 0x8;
@@ -63,32 +159,34 @@ export default function MixtapeCreatorScreen() {
     });
   };
 
-  /**
-   * Initialize or load existing mixtape
-   */
   useEffect(() => {
-    // Generate a unique UUID for the new mixtape
-    // Requirements: 3.1
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  useEffect(() => {
     const newId = generateMixtapeId();
     setCurrentMixtapeId(newId);
-     
-  }, []); // Only run once on mount
+  }, []);
 
-  /**
-   * Persist mixtape changes to storage
-   * Requirements: 2.5, 3.2, 3.4, 4.5
-   */
+  // Calculate total duration
+  const calculateDuration = (tracks: Track[]): number => {
+    return tracks.reduce((total, track) => total + (track.duration || 0), 0);
+  };
+
+  const totalDuration = calculateDuration([...sideA, ...sideB]);
+  const durationPercentage = Math.min((totalDuration / MAX_TAPE_DURATION) * 100, 100);
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const persistMixtape = useCallback(async () => {
-    if (!currentMixtapeId) return;
+    if (!currentMixtapeId || (sideA.length === 0 && sideB.length === 0)) return;
 
-    // Don't save empty mixtapes (no tracks on either side)
-    const totalTracks = sideA.length + sideB.length;
-    if (totalTracks === 0) {
-      console.log('Skipping save: No tracks in mixtape');
-      return;
-    }
-
-    // Check if mixtape already exists to preserve createdAt
     const existingMixtape = await mixtapeRepo.getById(currentMixtapeId);
 
     const mixtape: Mixtape = {
@@ -96,18 +194,14 @@ export default function MixtapeCreatorScreen() {
       title: mixtapeTitle || 'Untitled Mixtape',
       sideA,
       sideB,
-      theme: tapeTheme, // Store theme data with mixtape - Requirements: 4.5
-      envelope: {
-        color: '#FFE4B5',
-      },
+      theme: tapeTheme,
+      envelope: { color: '#FFE4B5' },
       createdAt: existingMixtape?.createdAt || new Date(),
       updatedAt: new Date(),
     };
 
     try {
-      // Always save the mixtape, even with local files
       await mixtapeRepo.save(mixtape);
-      console.log('Mixtape saved successfully');
     } catch (error) {
       console.error('Error saving mixtape:', error);
       await triggerErrorHaptic();
@@ -115,34 +209,60 @@ export default function MixtapeCreatorScreen() {
     }
   }, [currentMixtapeId, mixtapeTitle, sideA, sideB, tapeTheme, mixtapeRepo, showToast]);
 
-  /**
-   * Persist changes whenever sideA, sideB, title, or theme changes
-   * Requirements: 2.5, 3.2, 4.5
-   * Debounced to prevent excessive saves
-   */
   useEffect(() => {
-    // Only attempt to save if there are tracks
     if (currentMixtapeId && (sideA.length > 0 || sideB.length > 0)) {
       const timeoutId = setTimeout(() => {
         persistMixtape();
-      }, 1000); // Debounce for 1 second
-
+      }, 1000);
       return () => clearTimeout(timeoutId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sideA, sideB, mixtapeTitle, tapeTheme, currentMixtapeId]);
+  }, [sideA, sideB, mixtapeTitle, tapeTheme, currentMixtapeId, persistMixtape]);
 
-  /**
-   * Handles local audio file upload
-   * Requirements: 1.1
-   */
-  const handleLocalFileUpload = async () => {
+  // Helper function to get audio duration
+  const getAudioDuration = async (url: string): Promise<number> => {
+    if (Platform.OS === 'web') {
+      // Web: Use HTML5 Audio API
+      return new Promise((resolve) => {
+        const audio = new Audio(url);
+        audio.addEventListener('loadedmetadata', () => {
+          resolve(Math.floor(audio.duration));
+        });
+        audio.addEventListener('error', () => {
+          console.error('Error loading audio metadata');
+          resolve(180); // Default to 3 minutes on error
+        });
+      });
+    } else {
+      // Mobile: Use expo-av
+      try {
+        const { Audio } = require('expo-av');
+        const { sound, status } = await Audio.Sound.createAsync(
+          { uri: url },
+          { shouldPlay: false }
+        );
+        
+        if (status.isLoaded && status.durationMillis) {
+          const duration = Math.floor(status.durationMillis / 1000);
+          await sound.unloadAsync(); // Clean up
+          return duration;
+        } else {
+          await sound.unloadAsync();
+          console.error('Could not load audio duration');
+          return 180; // Default to 3 minutes
+        }
+      } catch (error) {
+        console.error('Error loading audio on mobile:', error);
+        return 180; // Default to 3 minutes on error
+      }
+    }
+  };
+
+  const handleFileUpload = async () => {
     await triggerLightHaptic();
     setIsLoading(true);
     setLoadingMessage('Uploading audio file...');
     
     try {
-      // Web-specific file picker using HTML input
       if (Platform.OS === 'web') {
         const input = document.createElement('input');
         input.type = 'file';
@@ -150,91 +270,116 @@ export default function MixtapeCreatorScreen() {
         
         input.onchange = async (e: any) => {
           const file = e.target.files?.[0];
-          if (!file) return;
+          if (!file) {
+            setIsLoading(false);
+            return;
+          }
           
-          // Create a blob URL for the file
           const blobUrl = URL.createObjectURL(file);
           
-          // Create audio source
+          // Get actual audio duration
+          setLoadingMessage('Reading audio duration...');
+          const duration = await getAudioDuration(blobUrl);
+          console.log(`Audio duration: ${duration} seconds (${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')})`);
+          
+          // Check if adding this track would exceed the limit
+          const currentDuration = calculateDuration([...sideA, ...sideB]);
+          const newTotalDuration = currentDuration + duration;
+          
+          if (newTotalDuration > MAX_TAPE_DURATION) {
+            const remainingTime = MAX_TAPE_DURATION - currentDuration;
+            await triggerErrorHaptic();
+            showToast(`Cannot add track: Would exceed 30-minute limit. Only ${Math.floor(remainingTime / 60)}:${(remainingTime % 60).toString().padStart(2, '0')} remaining.`, 'error');
+            setIsLoading(false);
+            return;
+          }
+          
           const audioSource: AudioSource = {
             type: 'local',
             uri: blobUrl,
           };
 
-          // Extract track name from filename
           const trackName = file.name || 'Unknown Track';
-
-          // Create track object
           const newTrack: Track = {
             id: `track-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            title: trackName.replace(/\.[^/.]+$/, ''), // Remove extension
-            duration: 0, // Will be determined during playback
+            title: trackName.replace(/\.[^/.]+$/, ''),
+            duration: duration,
             source: audioSource,
           };
 
-          // Save audio file to repository for export
           try {
             await audioRepo.saveAudioFile(newTrack.id, blobUrl);
           } catch (error) {
-            console.error(`Failed to save audio file for track ${newTrack.id}:`, error);
+            console.error(`Failed to save audio file:`, error);
           }
 
-          // Add to track pool
-          setTrackPool([...trackPool, newTrack]);
+          setSideA([...sideA, newTrack]);
+          await triggerSuccessHaptic();
+          showToast(`Added "${newTrack.title}" (${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')})`, 'success');
+          setIsLoading(false);
         };
         
         input.click();
         return;
       }
       
-      // Native file picker using expo-document-picker
       const result = await DocumentPicker.getDocumentAsync({
         type: 'audio/*',
         copyToCacheDirectory: true,
       });
 
       if (result.canceled) {
+        setIsLoading(false);
         return;
       }
 
       const file = result.assets[0];
-      
-      // Create audio source
       const audioSource: AudioSource = {
         type: 'local',
         uri: file.uri,
       };
 
-      // Validate audio source
       const validation = validateAudioSource(audioSource);
       if (!validation.valid) {
         Alert.alert('Invalid Audio File', validation.error || 'Unsupported audio format');
+        setIsLoading(false);
         return;
       }
 
-      // Extract track name from filename
       const trackName = file.name || 'Unknown Track';
-
-      // Create track object
+      
+      // Get audio duration for native
+      setLoadingMessage('Reading audio duration...');
+      const duration = await getAudioDuration(file.uri);
+      
+      // Check if adding this track would exceed the limit
+      const currentDuration = calculateDuration([...sideA, ...sideB]);
+      const newTotalDuration = currentDuration + duration;
+      
+      if (newTotalDuration > MAX_TAPE_DURATION) {
+        const remainingTime = MAX_TAPE_DURATION - currentDuration;
+        await triggerErrorHaptic();
+        showToast(`Cannot add track: Would exceed 30-minute limit. Only ${Math.floor(remainingTime / 60)}:${(remainingTime % 60).toString().padStart(2, '0')} remaining.`, 'error');
+        setIsLoading(false);
+        return;
+      }
+      
       const newTrack: Track = {
         id: `track-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        title: trackName.replace(/\.[^/.]+$/, ''), // Remove extension
-        duration: 0, // Will be determined during playback
+        title: trackName.replace(/\.[^/.]+$/, ''),
+        duration: duration,
         source: audioSource,
       };
 
-      // Save audio file to repository for export
       try {
         await audioRepo.saveAudioFile(newTrack.id, file.uri);
       } catch (error) {
-        console.error(`Failed to save audio file for track ${newTrack.id}:`, error);
+        console.error(`Failed to save audio file:`, error);
       }
 
-      // Add to track pool
-      setTrackPool([...trackPool, newTrack]);
-      
+      setSideA([...sideA, newTrack]);
       await triggerSuccessHaptic();
-      showToast(`Added "${newTrack.title}" to track pool`, 'success');
+      showToast(`Added "${newTrack.title}" (${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')})`, 'success');
     } catch (error) {
       console.error('Error picking audio file:', error);
       await triggerErrorHaptic();
@@ -244,136 +389,114 @@ export default function MixtapeCreatorScreen() {
     }
   };
 
-  /**
-   * Validates URL input in real-time
-   */
-  const handleUrlInputChange = (text: string) => {
-    setUrlInput(text);
-    
-    // Validate the URL
-    if (!text.trim()) {
-      setIsUrlValid(false);
-      return;
-    }
-    
-    const validation = validateAudioUrl(text.trim());
-    
-    // Only accept direct audio URLs
-    setIsUrlValid(validation.valid && validation.provider === 'direct');
-  };
-
-  /**
-   * Handles URL-based audio source addition
-   * Requirements: 1.2, 16.5
-   */
-  const handleUrlSubmit = async () => {
+  const handleAddTrack = async () => {
     await triggerLightHaptic();
     
-    if (!urlInput.trim()) {
-      await triggerErrorHaptic();
-      showToast('Please enter a URL', 'error');
+    if (!trackInput.trim()) {
+      handleFileUpload();
       return;
     }
 
-    // Validate URL
-    const validation = validateAudioUrl(urlInput.trim());
+    const validation = validateAudioUrl(trackInput.trim());
     if (!validation.valid || validation.provider !== 'direct') {
-      // Requirements: 16.5 - Simple error message for URL validation failures
-      const errorMsg = validation.error || 'Only direct MP3/AAC/WAV/M4A URLs are supported';
       await triggerErrorHaptic();
-      showToast(errorMsg, 'error');
+      showToast('Only direct MP3/AAC/WAV/M4A URLs are supported', 'error');
       return;
     }
 
-    // Create audio source
-    const audioSource: AudioSource = {
-      type: 'url',
-      uri: urlInput.trim(),
-      metadata: {
-        provider: validation.provider,
-      },
-    };
+    setIsLoading(true);
+    setLoadingMessage('Loading audio from URL...');
 
-    // Create track object
-    const newTrack: Track = {
-      id: `track-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-      title: 'Audio Track',
-      duration: 0, // Will be determined during playback
-      source: audioSource,
-    };
+    try {
+      // Get audio duration from URL
+      const duration = await getAudioDuration(trackInput.trim());
+      
+      // Check if adding this track would exceed the limit
+      const currentDuration = calculateDuration([...sideA, ...sideB]);
+      const newTotalDuration = currentDuration + duration;
+      
+      if (newTotalDuration > MAX_TAPE_DURATION) {
+        const remainingTime = MAX_TAPE_DURATION - currentDuration;
+        await triggerErrorHaptic();
+        showToast(`Cannot add track: Would exceed 30-minute limit. Only ${Math.floor(remainingTime / 60)}:${(remainingTime % 60).toString().padStart(2, '0')} remaining.`, 'error');
+        setIsLoading(false);
+        return;
+      }
 
-    // Add to track pool
-    setTrackPool([...trackPool, newTrack]);
-    
-    // Reset and close modal
-    setUrlInput('');
-    setIsUrlValid(false);
-    setShowUrlModal(false);
-    
-    await triggerSuccessHaptic();
-    showToast(`Added "${newTrack.title}" to track pool`, 'success');
-  };
+      const audioSource: AudioSource = {
+        type: 'url',
+        uri: trackInput.trim(),
+        metadata: { provider: validation.provider },
+      };
 
-  /**
-   * Removes a track from the track pool
-   */
-  const handleRemoveTrack = (trackId: string) => {
-    setTrackPool(trackPool.filter(track => track.id !== trackId));
-  };
+      const newTrack: Track = {
+        id: `track-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        title: 'Audio Track',
+        duration: duration,
+        source: audioSource,
+      };
 
-  /**
-   * Handles track placement from track pool to Side A or Side B
-   * Requirements: 2.2
-   */
-  const handleTrackPlacement = (track: Track, side: 'A' | 'B') => {
-    // Remove from track pool
-    setTrackPool(trackPool.filter(t => t.id !== track.id));
-    
-    // Add to the appropriate side
-    if (side === 'A') {
-      setSideA([...sideA, track]);
-    } else {
-      setSideB([...sideB, track]);
+      setSideA([...sideA, newTrack]);
+      setTrackInput('');
+      await triggerSuccessHaptic();
+      showToast(`Added "${newTrack.title}" (${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')})`, 'success');
+    } catch (error) {
+      console.error('Error adding track from URL:', error);
+      await triggerErrorHaptic();
+      showToast('Failed to load audio from URL', 'error');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  /**
-   * Handles reordering within a side
-   * Requirements: 2.3
-   */
-  const handleReorder = (side: 'A' | 'B', fromIndex: number, toIndex: number) => {
+  const handleRemoveTrack = (trackId: string, side: 'A' | 'B') => {
     if (side === 'A') {
-      const newSideA = [...sideA];
-      const [movedTrack] = newSideA.splice(fromIndex, 1);
-      newSideA.splice(toIndex, 0, movedTrack);
-      setSideA(newSideA);
-    } else {
-      const newSideB = [...sideB];
-      const [movedTrack] = newSideB.splice(fromIndex, 1);
-      newSideB.splice(toIndex, 0, movedTrack);
-      setSideB(newSideB);
-    }
-  };
-
-  /**
-   * Handles track removal from a side
-   * Requirements: 2.4
-   */
-  const handleRemoveFromSide = (trackId: string, side: 'A' | 'B') => {
-    if (side === 'A') {
-      const removedTrack = sideA.find(t => t.id === trackId);
       setSideA(sideA.filter(t => t.id !== trackId));
-      if (removedTrack) {
-        setTrackPool([...trackPool, removedTrack]);
-      }
     } else {
-      const removedTrack = sideB.find(t => t.id === trackId);
       setSideB(sideB.filter(t => t.id !== trackId));
-      if (removedTrack) {
-        setTrackPool([...trackPool, removedTrack]);
-      }
     }
   };
+
+  const handleMoveTrack = (track: Track, fromSide: 'A' | 'B', fromIndex: number, toSide: 'A' | 'B') => {
+    console.log(`handleMoveTrack: Moving "${track.title}" from Side ${fromSide} (index ${fromIndex}) to Side ${toSide}`);
+    
+    if (fromSide === 'A' && toSide === 'B') {
+      // Remove from Side A and add to Side B using functional setState
+      setSideA(prevSideA => {
+        const newSideA = prevSideA.filter((_, i) => i !== fromIndex);
+        console.log(`Moving A->B: sideA ${prevSideA.length}->${newSideA.length}`);
+        return newSideA;
+      });
+      setSideB(prevSideB => {
+        const newSideB = [...prevSideB, track];
+        console.log(`Moving A->B: sideB ${prevSideB.length}->${newSideB.length}`);
+        return newSideB;
+      });
+      triggerSuccessHaptic();
+      showToast(`Moved "${track.title}" to Side B`, 'success');
+    } else if (fromSide === 'B' && toSide === 'A') {
+      // Remove from Side B and add to Side A using functional setState
+      setSideB(prevSideB => {
+        const newSideB = prevSideB.filter((_, i) => i !== fromIndex);
+        console.log(`Moving B->A: sideB ${prevSideB.length}->${newSideB.length}`);
+        return newSideB;
+      });
+      setSideA(prevSideA => {
+        const newSideA = [...prevSideA, track];
+        console.log(`Moving B->A: sideA ${prevSideA.length}->${newSideA.length}`);
+        return newSideA;
+      });
+      triggerSuccessHaptic();
+      showToast(`Moved "${track.title}" to Side A`, 'success');
+    }
+  };
+
+
+
+  // Early return for font loading - must be after all hooks
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
 
   return (
     <View style={styles.container}>
@@ -381,263 +504,192 @@ export default function MixtapeCreatorScreen() {
       
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerTop}>
-          <TouchableOpacity
-            style={styles.homeButton}
-            onPress={async () => {
-              await triggerLightHaptic();
-              router.push('/');
-            }}
-            accessibilityLabel="Go to home screen"
-            accessibilityRole="button"
-          >
-            <Text style={styles.homeButtonText}>← Home</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.libraryButton}
-            onPress={async () => {
-              await triggerLightHaptic();
-              router.push('/library');
-            }}
-            accessibilityLabel="Go to library"
-            accessibilityRole="button"
-          >
-            <Text style={styles.libraryButtonText}>📚 Library</Text>
-          </TouchableOpacity>
-        </View>
-        <Text
-          style={styles.headerTitle}
-          accessibilityRole="header"
-        >
-          Create Mixtape
-        </Text>
-        <Text style={styles.headerSubtitle}>Maker Mode</Text>
-        
-        {/* Mixtape Title Input */}
-        <TextInput
-          style={styles.titleInput}
-          placeholder="Mixtape Title..."
-          placeholderTextColor="#666666"
-          value={mixtapeTitle}
-          onChangeText={setMixtapeTitle}
-          accessibilityLabel="Mixtape title"
-          accessibilityHint="Enter a title for your mixtape"
-        />
-        
-        {/* Theme Designer Button - Requirements: 4.1 */}
         <TouchableOpacity
-          style={styles.themeButton}
+          style={styles.backButton}
           onPress={async () => {
             await triggerLightHaptic();
-            setShowThemeDesigner(true);
+            router.back();
           }}
-          accessibilityLabel="Customize tape shell"
-          accessibilityRole="button"
-          accessibilityHint="Open tape shell designer to customize appearance"
         >
-          <Text style={styles.themeButtonText}>🎨 Customize Tape Shell</Text>
+          <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
-        
-        {/* Export Button */}
-        {(sideA.length > 0 || sideB.length > 0) && (
-          <TouchableOpacity
-            style={[styles.themeButton, styles.exportButton]}
-            onPress={async () => {
-              await triggerLightHaptic();
-              router.push(`/export?id=${currentMixtapeId}`);
-            }}
-            accessibilityLabel="Export mixtape"
-            accessibilityRole="button"
-            accessibilityHint="Navigate to export screen"
-          >
-            <Text style={styles.themeButtonText}>📤 Export Mixtape</Text>
-          </TouchableOpacity>
-        )}
+        <Text style={styles.headerTitle}>Create Your Mixtape</Text>
       </View>
 
       <ScrollView style={styles.scrollContainer}>
-        {/* Track Pool Section */}
-        <View style={styles.trackPoolSection}>
-          <Text style={styles.sectionTitle}>Track Pool</Text>
-          
-          {/* Add Track Buttons */}
-          <View style={styles.addButtonsContainer}>
+        {/* Tape Title */}
+        <View style={styles.section}>
+          <Text style={styles.label}>Tape Title</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter Your Tape Title"
+            placeholderTextColor="#666"
+            value={mixtapeTitle}
+            onChangeText={setMixtapeTitle}
+          />
+        </View>
+
+        {/* Add Tracks */}
+        <View style={styles.section}>
+          <Text style={styles.label}>Add Tracks</Text>
+          <View style={styles.addTrackContainer}>
+            <TextInput
+              style={styles.trackInput}
+              placeholder="Paste MP3 files or Direct URLs"
+              placeholderTextColor="#666"
+              value={trackInput}
+              onChangeText={setTrackInput}
+            />
             <TouchableOpacity
-              style={styles.addButton}
-              onPress={handleLocalFileUpload}
-              accessibilityLabel="Upload local audio file"
-              accessibilityRole="button"
-              accessibilityHint="Select an audio file from your device"
+              style={styles.uploadIcon}
+              onPress={handleFileUpload}
             >
-              <Text style={styles.addButtonText}>📁 Upload Local File</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={async () => {
-                await triggerLightHaptic();
-                setShowUrlModal(true);
-              }}
-              accessibilityLabel="Add track from URL"
-              accessibilityRole="button"
-              accessibilityHint="Add a track from an online URL"
-            >
-              <Text style={styles.addButtonText}>🔗 Add from URL</Text>
+              <Text style={styles.uploadIconText}>📁</Text>
             </TouchableOpacity>
           </View>
+          <HoverableButton
+            style={styles.addButton}
+            textStyle={styles.addButtonText}
+            onPress={handleAddTrack}
+            glowColor="#d4b8ff"
+          >
+            Add Track
+          </HoverableButton>
+        </View>
 
-          {/* Track Pool List - Requirements: 1.3 (Display track name and metadata in creation mode) */}
-          <View style={styles.trackPoolList}>
-            {trackPool.length === 0 ? (
+        {/* Side A */}
+        <View style={styles.section}>
+          <Text style={styles.sideLabel}>SIDE A</Text>
+          <View style={styles.trackList}>
+            {sideA.length === 0 ? (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyStateText}>No tracks in pool</Text>
-                <Text style={styles.emptyStateSubtext}>
-                  Add tracks from local files or URLs
+                <Text style={styles.emptyText}>
+                  No tracks yet
                 </Text>
               </View>
             ) : (
-              trackPool.map((track) => (
-                <View key={track.id} style={styles.trackItem}>
-                  <View style={styles.trackInfo}>
-                    <Text style={styles.trackTitle}>{track.title}</Text>
-                    {track.artist && (
-                      <Text style={styles.trackArtist}>{track.artist}</Text>
-                    )}
-                    <Text style={styles.trackMetadata}>
-                      {track.source.type === 'url' 
-                        ? `${track.source.metadata?.provider?.toUpperCase() || 'URL'} • ${track.source.uri.substring(0, 40)}...`
-                        : `Local File • ${track.source.uri.split('/').pop()?.substring(0, 30)}...`
-                      }
-                    </Text>
-                  </View>
-                  <View style={styles.trackActions}>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => handleTrackPlacement(track, 'A')}
-                    >
-                      <Text style={styles.actionButtonText}>→ A</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.actionButton}
-                      onPress={() => handleTrackPlacement(track, 'B')}
-                    >
-                      <Text style={styles.actionButtonText}>→ B</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.removeButton}
-                      onPress={() => handleRemoveTrack(track.id)}
-                    >
-                      <Text style={styles.removeButtonText}>✕</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
+              sideA.map((track, index) => (
+                <DraggableTrack
+                  key={track.id}
+                  track={track}
+                  index={index}
+                  side="A"
+                  onRemove={handleRemoveTrack}
+                  onMove={handleMoveTrack}
+                />
               ))
             )}
           </View>
         </View>
 
-        {/* Side A and Side B Columns - Requirements: 2.1 */}
-        <View style={styles.sidesContainer}>
-          <View style={styles.sideColumn}>
-            <Text style={styles.sideTitle}>Side A</Text>
-            <TrackList
-              tracks={sideA}
-              side="A"
-              onReorder={handleReorder}
-              onRemove={handleRemoveFromSide}
-            />
+        {/* Side B */}
+        <View style={styles.section}>
+          <Text style={styles.sideLabel}>SIDE B</Text>
+          <View style={[styles.trackList, styles.sideBDropZone]}>
+            {sideB.length === 0 ? (
+              <View style={styles.dropZone}>
+                <Text style={styles.dropZoneText}>
+                  Use arrow buttons to move tracks here
+                </Text>
+              </View>
+            ) : (
+              sideB.map((track, index) => (
+                <DraggableTrack
+                  key={track.id}
+                  track={track}
+                  index={index}
+                  side="B"
+                  onRemove={handleRemoveTrack}
+                  onMove={handleMoveTrack}
+                />
+              ))
+            )}
           </View>
+        </View>
 
-          <View style={styles.sideColumn}>
-            <Text style={styles.sideTitle}>Side B</Text>
-            <TrackList
-              tracks={sideB}
-              side="B"
-              onReorder={handleReorder}
-              onRemove={handleRemoveFromSide}
-            />
+        {/* Tape Length */}
+        <View style={styles.section}>
+          <View style={styles.tapeLengthHeader}>
+            <Text style={styles.label}>Tape Length</Text>
+            <Text style={styles.durationText}>
+              {formatTime(totalDuration)} / {formatTime(MAX_TAPE_DURATION)}
+            </Text>
           </View>
+          <View style={styles.progressBarContainer}>
+            <View style={[styles.progressBar, { width: `${durationPercentage}%` }]} />
+          </View>
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.section}>
+          <HoverableButton
+            style={styles.customizeButton}
+            textStyle={styles.customizeButtonText}
+            onPress={async () => {
+              await triggerLightHaptic();
+              setShowThemeDesigner(true);
+            }}
+            glowColor="#d4b8ff"
+          >
+            CUSTOMIZE TAPE DESIGN
+          </HoverableButton>
+
+          <HoverableButton
+            style={[
+              styles.saveButton,
+              (sideA.length === 0 && sideB.length === 0) && styles.saveButtonDisabled
+            ]}
+            textStyle={[
+              styles.saveButtonText,
+              (sideA.length === 0 && sideB.length === 0) && styles.saveButtonTextDisabled
+            ]}
+            onPress={async () => {
+              if (sideA.length === 0 && sideB.length === 0) {
+                await triggerErrorHaptic();
+                showToast('Add at least one song to save', 'error');
+                return;
+              }
+              await triggerLightHaptic();
+              await persistMixtape();
+              showToast('Mixtape saved!', 'success');
+              router.push('/library');
+            }}
+            glowColor="#4a4a4a"
+            disabled={sideA.length === 0 && sideB.length === 0}
+          >
+            SAVE MIXTAPE
+          </HoverableButton>
         </View>
       </ScrollView>
 
-      {/* URL Input Modal - Requirements: 1.2 */}
-      <Modal
-        visible={showUrlModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowUrlModal(false)}
-        accessible={true}
-        accessibilityViewIsModal={true}
-      >
-        <View style={styles.modalOverlay} accessible={false}>
-          <View style={styles.modalContent} accessible={true}>
-            <Text style={styles.modalTitle}>Add Track from URL</Text>
-            <Text style={styles.modalSubtitle}>
-              Supported: Direct MP3/AAC/WAV/M4A URLs only
-            </Text>
-            
-            <TextInput
-              style={styles.urlInput}
-              placeholder="Enter URL..."
-              value={urlInput}
-              onChangeText={handleUrlInputChange}
-              autoCapitalize="none"
-              autoCorrect={false}
-              keyboardType="url"
-            />
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => {
-                  setUrlInput('');
-                  setIsUrlValid(false);
-                  setShowUrlModal(false);
-                }}
-              >
-                <Text style={styles.modalButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[
-                  styles.modalButton, 
-                  styles.modalButtonSubmit,
-                  !isUrlValid && styles.modalButtonDisabled
-                ]}
-                onPress={handleUrlSubmit}
-                disabled={!isUrlValid}
-              >
-                <Text style={[styles.modalButtonText, styles.modalButtonTextSubmit]}>
-                  Add Track
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Theme Designer Modal - Requirements: 4.1, 4.2, 4.3, 4.4 */}
+      {/* Theme Designer Modal */}
       <Modal
         visible={showThemeDesigner}
         animationType="slide"
         transparent={false}
         onRequestClose={() => setShowThemeDesigner(false)}
-        accessible={true}
-        accessibilityViewIsModal={true}
       >
         <View style={styles.themeDesignerContainer}>
           <View style={styles.themeDesignerHeader}>
-            <Text style={styles.themeDesignerTitle}>Tape Shell Designer</Text>
             <TouchableOpacity
-              style={styles.themeDesignerCloseButton}
+              style={styles.backButton}
               onPress={() => setShowThemeDesigner(false)}
             >
-              <Text style={styles.themeDesignerCloseButtonText}>Done</Text>
+              <Text style={styles.backButtonText}>←</Text>
             </TouchableOpacity>
+            <Text style={styles.themeDesignerTitle}>Create Your Mixtape</Text>
           </View>
           <TapeShellDesigner
             theme={tapeTheme}
             onThemeChange={setTapeTheme}
+            mixtapeTitle={mixtapeTitle || 'Untitled Mixtape'}
+            onChangeSongs={() => setShowThemeDesigner(false)}
+            onSave={async () => {
+              await persistMixtape();
+              setShowThemeDesigner(false);
+              showToast('Mixtape saved!', 'success');
+              router.push('/library');
+            }}
           />
         </View>
       </Modal>
@@ -648,266 +700,260 @@ export default function MixtapeCreatorScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#0a0a0a',
   },
   header: {
-    padding: 20,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    backgroundColor: '#2a2a2a',
-    borderBottomWidth: 1,
-    borderBottomColor: '#3a3a3a',
-  },
-  headerTop: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 16,
+    alignItems: 'center',
+    padding: 16,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    backgroundColor: '#1a1a1a',
+    borderBottomWidth: 1,
+    borderBottomColor: '#2a2a2a',
   },
-  homeButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  homeButtonText: {
-    fontSize: 16,
-    color: '#4a9eff',
-    fontWeight: '600',
-  },
-  libraryButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-  },
-  libraryButtonText: {
-    fontSize: 16,
-    color: '#4a9eff',
-    fontWeight: '600',
+  backButtonText: {
+    fontSize: 24,
+    color: '#ffffff',
   },
   headerTitle: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontFamily: 'Staatliches',
     color: '#ffffff',
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#888888',
-    marginBottom: 12,
-  },
-  titleInput: {
-    backgroundColor: '#1a1a1a',
-    borderWidth: 1,
-    borderColor: '#3a3a3a',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: '#ffffff',
-    marginTop: 8,
-  },
-  themeButton: {
-    backgroundColor: '#4a9eff',
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  themeButtonText: {
-    color: '#ffffff',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  exportButton: {
-    backgroundColor: '#34d399',
+    marginLeft: 8,
+    letterSpacing: 1,
+    ...(Platform.OS === 'web' && {
+      flex: 1,
+      textAlign: 'center',
+      marginRight: 48, // Balance the back button width
+    }),
   },
   scrollContainer: {
     flex: 1,
   },
-  trackPoolSection: {
+  section: {
     padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#3a3a3a',
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
+  label: {
+    fontSize: 22,
+    fontFamily: 'Staatliches',
+    color: '#888',
+    marginBottom: 8,
+    letterSpacing: 0.5,
+    ...(Platform.OS === 'web' && {
+      textAlign: 'center',
+    }),
+  },
+  input: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    padding: 16,
+    fontSize: 16,
     color: '#ffffff',
-    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
   },
-  addButtonsContainer: {
+  addTrackContainer: {
     flexDirection: 'row',
-    gap: 12,
-    marginBottom: 20,
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#2a2a2a',
+    paddingRight: 12,
+  },
+  trackInput: {
+    flex: 1,
+    padding: 16,
+    fontSize: 16,
+    color: '#ffffff',
+  },
+  uploadIcon: {
+    padding: 8,
+  },
+  uploadIconText: {
+    fontSize: 20,
   },
   addButton: {
-    flex: 1,
-    backgroundColor: '#3a3a3a',
-    padding: 16,
+    backgroundColor: '#b794f6',
     borderRadius: 8,
+    padding: 16,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#4a4a4a',
+    marginTop: 12,
   },
   addButtonText: {
-    color: '#ffffff',
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
+    color: '#1a1a1a',
   },
-  trackPoolList: {
-    maxHeight: 300,
+  sideLabel: {
+    fontSize: 24,
+    fontFamily: 'Staatliches',
+    color: '#888',
+    marginBottom: 12,
+    letterSpacing: 1.5,
+    ...(Platform.OS === 'web' && {
+      textAlign: 'center',
+    }),
+  },
+  trackList: {
+    backgroundColor: '#1a1a1a',
+    borderRadius: 8,
+    padding: 12,
+    minHeight: 100,
+  },
+  sideBDropZone: {
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#2a2a2a',
+  },
+  dropZoneActive: {
+    borderColor: '#b794f6',
+    backgroundColor: '#1a1520',
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
+    paddingVertical: 32,
   },
-  emptyStateText: {
-    fontSize: 16,
-    color: '#666666',
-    marginBottom: 8,
-  },
-  emptyStateSubtext: {
+  emptyText: {
     fontSize: 14,
-    color: '#555555',
+    color: '#555',
+  },
+  dropZone: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 32,
+  },
+  dropZoneText: {
+    fontSize: 14,
+    color: '#555',
+  },
+  dropZoneTextActive: {
+    color: '#b794f6',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   trackItem: {
     flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#2a2a2a',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#3a3a3a',
+    borderRadius: 6,
+    padding: 12,
+    marginBottom: 8,
   },
-  trackInfo: {
-    flex: 1,
+  trackItemDragging: {
+    opacity: 0.7,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  dragHandle: {
+    fontSize: 16,
+    color: '#666',
+    marginRight: 12,
   },
   trackTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    flex: 1,
+    fontSize: 15,
     color: '#ffffff',
-    marginBottom: 4,
   },
-  trackArtist: {
-    fontSize: 14,
-    color: '#aaaaaa',
-    marginBottom: 4,
-  },
-  trackMetadata: {
-    fontSize: 12,
-    color: '#777777',
-  },
-  trackActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  actionButton: {
-    backgroundColor: '#4a9eff',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-  },
-  actionButtonText: {
-    color: '#ffffff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  removeButton: {
+  moveButton: {
     width: 32,
     height: 32,
     borderRadius: 16,
     backgroundColor: '#3a3a3a',
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 8,
   },
-  removeButtonText: {
-    color: '#ff6b6b',
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  sidesContainer: {
-    flexDirection: 'row',
-    padding: 20,
-    gap: 20,
-  },
-  sideColumn: {
-    flex: 1,
-  },
-  sideTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#ffffff',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-    justifyContent: 'center',
+  moveButtonLeft: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#3a3a3a',
     alignItems: 'center',
-    padding: 20,
+    justifyContent: 'center',
+    marginRight: 12,
   },
-  modalContent: {
-    backgroundColor: '#2a2a2a',
-    borderRadius: 12,
-    padding: 24,
-    width: '100%',
-    maxWidth: 500,
-    borderWidth: 1,
-    borderColor: '#3a3a3a',
-  },
-  modalTitle: {
-    fontSize: 22,
+  moveButtonText: {
+    color: '#b794f6',
+    fontSize: 20,
     fontWeight: 'bold',
+  },
+  deleteButton: {
+    padding: 4,
+  },
+  deleteButtonText: {
+    fontSize: 22,
     color: '#ffffff',
+  },
+  tapeLengthHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 8,
   },
-  modalSubtitle: {
-    fontSize: 13,
-    color: '#888888',
-    marginBottom: 20,
-    lineHeight: 18,
+  durationText: {
+    fontSize: 14,
+    color: '#888',
   },
-  urlInput: {
-    backgroundColor: '#1a1a1a',
+  progressBarContainer: {
+    height: 8,
+    backgroundColor: '#2a2a2a',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#b794f6',
+    borderRadius: 4,
+  },
+  customizeButton: {
+    backgroundColor: '#b794f6',
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  customizeButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1a1a1a',
+    letterSpacing: 0.5,
+  },
+  saveButton: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: '#3a3a3a',
-    borderRadius: 8,
-    padding: 14,
-    fontSize: 15,
-    color: '#ffffff',
-    marginBottom: 20,
   },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  modalButton: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  modalButtonCancel: {
-    backgroundColor: '#3a3a3a',
-    borderWidth: 1,
-    borderColor: '#4a4a4a',
-  },
-  modalButtonSubmit: {
-    backgroundColor: '#4a9eff',
-  },
-  modalButtonDisabled: {
-    backgroundColor: '#3a3a3a',
+  saveButtonDisabled: {
+    backgroundColor: '#1a1a1a',
+    borderColor: '#2a2a2a',
     opacity: 0.5,
   },
-  modalButtonText: {
+  saveButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#ffffff',
+    letterSpacing: 0.5,
   },
-  modalButtonTextSubmit: {
-    color: '#ffffff',
+  saveButtonTextDisabled: {
+    color: '#666666',
   },
   themeDesignerContainer: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#0a0a0a',
   },
   themeDesignerHeader: {
     flexDirection: 'row',
@@ -915,23 +961,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    backgroundColor: '#2a2a2a',
+    backgroundColor: '#1a1a1a',
     borderBottomWidth: 1,
-    borderBottomColor: '#3a3a3a',
+    borderBottomColor: '#2a2a2a',
   },
   themeDesignerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
+    fontSize: 26,
+    fontFamily: 'Staatliches',
     color: '#ffffff',
+    letterSpacing: 1,
+    flex: 1,
+    textAlign: 'center',
+    marginRight: 48, // Balance the back button width
   },
   themeDesignerCloseButton: {
-    backgroundColor: '#4a9eff',
+    backgroundColor: '#b794f6',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,
   },
   themeDesignerCloseButtonText: {
-    color: '#ffffff',
+    color: '#1a1a1a',
     fontSize: 16,
     fontWeight: '600',
   },

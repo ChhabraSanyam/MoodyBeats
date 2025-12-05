@@ -11,9 +11,11 @@
 
 import React from 'react';
 import {
+    Platform,
     ScrollView,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View,
 } from 'react-native';
@@ -36,22 +38,25 @@ const COLOR_PALETTE = [
   { id: 'blush', name: 'Blush', hex: '#FFF0F5' },
   { id: 'sage', name: 'Sage', hex: '#F0F8F0' },
   { id: 'vanilla', name: 'Vanilla', hex: '#F3E5AB' },
+  { id: 'lilac', name: 'Lilac', hex: '#E0D4F7' },
+  { id: 'coral', name: 'Coral', hex: '#FFE5D9' },
 ];
 
 // Preset sigil designs - Requirements: 5.3
 const SIGIL_DESIGNS = [
-  { id: 'none', name: 'None', symbol: '', description: 'No sigil' },
-  { id: 'moon-stars', name: 'Moon & Stars', symbol: '🌙✨', description: 'Celestial magic' },
-  { id: 'skull', name: 'Skull', symbol: '💀', description: 'Spooky vibes' },
-  { id: 'heart', name: 'Heart', symbol: '❤️', description: 'Love and care' },
-  { id: 'rose', name: 'Rose', symbol: '🌹', description: 'Romance' },
-  { id: 'ghost', name: 'Ghost', symbol: '👻', description: 'Haunting presence' },
-  { id: 'crystal', name: 'Crystal', symbol: '🔮', description: 'Mystical energy' },
-  { id: 'flame', name: 'Flame', symbol: '🔥', description: 'Burning passion' },
-  { id: 'lightning', name: 'Lightning', symbol: '⚡', description: 'Electric energy' },
-  { id: 'butterfly', name: 'Butterfly', symbol: '🦋', description: 'Transformation' },
-  { id: 'eye', name: 'Eye', symbol: '👁️', description: 'All-seeing' },
-  { id: 'pentagram', name: 'Pentagram', symbol: '⭐', description: 'Occult symbol' },
+  { id: 'none', name: 'None', symbol: '', description: 'No sigil', circleColor: '#ffffff' },
+  { id: 'stars', name: 'Stars', symbol: '✨', description: 'Celestial magic', circleColor: '#FFF9E6' },
+  { id: 'skull', name: 'Skull', symbol: '💀', description: 'Spooky vibes', circleColor: '#E8E8E8' },
+  { id: 'heart', name: 'Heart', symbol: '❤️', description: 'Love and care', circleColor: '#FFE0E6' },
+  { id: 'rose', name: 'Rose', symbol: '🌹', description: 'Romance', circleColor: '#FFE5ED' },
+  { id: 'ghost', name: 'Ghost', symbol: '👻', description: 'Haunting presence', circleColor: '#F0F0F5' },
+  { id: 'crystal', name: 'Crystal', symbol: '🔮', description: 'Mystical energy', circleColor: '#E6E0FF' },
+  { id: 'flame', name: 'Flame', symbol: '🔥', description: 'Burning passion', circleColor: '#FFE8D6' },
+  { id: 'lightning', name: 'Lightning', symbol: '⚡', description: 'Electric energy', circleColor: '#FFFACD' },
+  { id: 'butterfly', name: 'Butterfly', symbol: '🦋', description: 'Transformation', circleColor: '#E6F3FF' },
+  { id: 'eye', name: 'Eye', symbol: '👁️', description: 'All-seeing', circleColor: '#E8F4F8' },
+  { id: 'pentagram', name: 'Pentagram', symbol: '⭐', description: 'Occult symbol', circleColor: '#FFFACD' },
+  { id: 'gaming', name: 'Gaming', symbol: '🎮', description: 'Game on', circleColor: '#E8E5FF' },
 ];
 
 /**
@@ -81,6 +86,16 @@ export default function EnvelopeCustomizer({ envelope, onEnvelopeChange }: Envel
     });
   };
 
+  /**
+   * Handle signature change
+   */
+  const handleSignatureChange = (signature: string) => {
+    onEnvelopeChange({
+      ...envelope,
+      signature: signature.trim() === '' ? undefined : signature,
+    });
+  };
+
   // Get current color and sigil details
   const currentColor = COLOR_PALETTE.find((c) => c.hex === envelope.color);
   const currentSigil = SIGIL_DESIGNS.find((s) => s.id === envelope.sigil);
@@ -99,25 +114,31 @@ export default function EnvelopeCustomizer({ envelope, onEnvelopeChange }: Envel
               },
             ]}
           >
-            {/* Envelope flap */}
-            <View
-              style={[
-                styles.envelopeFlap,
-                {
-                  borderBottomColor: envelope.color || '#FFF8DC',
-                },
-              ]}
-            />
+            {/* Envelope flap lines - white border outline */}
+            <View style={styles.envelopeFlapLines}>
+              <View style={styles.flapLineLeft} />
+              <View style={styles.flapLineRight} />
+            </View>
             
-            {/* Sigil display */}
-            {envelope.sigil && currentSigil && currentSigil.symbol && (
-              <View style={styles.sigilContainer}>
-                <Text style={styles.sigilSymbol}>{currentSigil.symbol}</Text>
+            {/* Sigil display - always show placeholder */}
+            <View style={styles.sigilContainer}>
+              {envelope.sigil && currentSigil && currentSigil.symbol ? (
+                <>
+                  <View style={[styles.sigilCircle, { backgroundColor: currentSigil.circleColor }]} />
+                  <Text style={styles.sigilSymbol}>{currentSigil.symbol}</Text>
+                </>
+              ) : (
+                <View style={styles.sigilPlaceholder} />
+              )}
+            </View>
+
+            {/* Signature display */}
+            {envelope.signature && (
+              <View style={styles.signatureContainer}>
+                <Text style={styles.signatureLabel}>From -</Text>
+                <Text style={styles.signatureText}>{envelope.signature}</Text>
               </View>
             )}
-            
-            {/* Envelope seal */}
-            <View style={styles.envelopeSeal} />
           </View>
           
           {/* Display active customizations */}
@@ -202,6 +223,22 @@ export default function EnvelopeCustomizer({ envelope, onEnvelopeChange }: Envel
           ))}
         </View>
       </View>
+
+      {/* Signature Section */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Signature</Text>
+        <Text style={styles.sectionDescription}>
+          Sign your name on the envelope
+        </Text>
+        <TextInput
+          style={styles.signatureInput}
+          value={envelope.signature || ''}
+          onChangeText={handleSignatureChange}
+          placeholder="Your name..."
+          placeholderTextColor="#666666"
+          maxLength={30}
+        />
+      </View>
     </ScrollView>
   );
 }
@@ -224,7 +261,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 20,
-    fontWeight: '600',
+    fontFamily: 'Staatliches',
     color: '#ffffff',
     marginBottom: 8,
   },
@@ -237,10 +274,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   envelopePreview: {
-    width: 280,
-    height: 180,
-    borderRadius: 8,
-    padding: 20,
+    width: 320,
+    height: 200,
+    borderRadius: 4,
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -249,39 +285,66 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 8,
     position: 'relative',
-    borderWidth: 2,
-    borderColor: '#d4af37',
+    overflow: 'hidden',
+    borderWidth: 5,
+    borderColor: '#000000',
   },
-  envelopeFlap: {
+  envelopeFlapLines: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    width: 0,
-    height: 0,
-    borderLeftWidth: 140,
-    borderRightWidth: 140,
-    borderBottomWidth: 90,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
+    bottom: 0,
+  },
+  flapLineLeft: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '56%',
+    height: 2,
+    backgroundColor: '#000000',
+    transform: [{ rotate: '25deg' }],
+    transformOrigin: 'left top',
+  },
+  flapLineRight: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: '55%',
+    height: 2,
+    backgroundColor: '#000000',
+    transform: [{ rotate: '-25deg' }],
+    transformOrigin: 'right top',
   },
   sigilContainer: {
+    position: 'absolute',
+    top: 29,
+    alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 20,
+    zIndex: 10,
+    minHeight: 60,
+    minWidth: 60,
+  },
+  sigilCircle: {
+    position: 'absolute',
+    width: 55,
+    height: 55,
+    borderRadius: 28,
+    backgroundColor: '#ffffff',
+    borderWidth: 2,
+    borderColor: '#000000',
   },
   sigilSymbol: {
-    fontSize: 48,
+    fontSize: Platform.OS === 'android' ? 32 : 38,
+    zIndex: 1,
   },
-  envelopeSeal: {
-    position: 'absolute',
-    bottom: 20,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#d4af37',
+  sigilPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     borderWidth: 2,
-    borderColor: '#b8941f',
+    borderColor: 'rgba(0, 0, 0, 0.2)',
   },
   previewInfo: {
     marginTop: 16,
@@ -307,8 +370,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   selectedColorOption: {
-    borderColor: '#4a9eff',
-    backgroundColor: '#2a3a4a',
+    borderColor: '#B28EF1',
+    backgroundColor: '#2a2a3a',
   },
   colorSwatch: {
     width: 60,
@@ -336,8 +399,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   selectedOption: {
-    borderColor: '#4a9eff',
-    backgroundColor: '#2a3a4a',
+    borderColor: '#B28EF1',
+    backgroundColor: '#2a2a3a',
   },
   sigilPreview: {
     fontSize: 32,
@@ -362,7 +425,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#4a9eff',
+    backgroundColor: '#B28EF1',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -370,5 +433,34 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  signatureContainer: {
+    position: 'absolute',
+    bottom: 12,
+    right: 16,
+    alignItems: 'flex-end',
+  },
+  signatureLabel: {
+    fontSize: 20,
+    color: '#000000',
+    marginBottom: 2,
+    fontFamily: Platform.OS === 'android' ? 'cursive' : 'Vladimir Script',
+    fontStyle: 'italic',
+  },
+  signatureText: {
+    fontSize: 30,
+    fontStyle: 'italic',
+    color: '#000000',
+    fontFamily: Platform.OS === 'android' ? 'cursive' : 'Vladimir Script',
+  },
+  signatureInput: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#B28EF1',
+    padding: 12,
+    fontSize: 20,
+    color: '#ffffff',
+    fontStyle: 'italic',
   },
 });
