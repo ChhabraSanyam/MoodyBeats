@@ -632,15 +632,27 @@ export default function MixtapeCreatorScreen() {
           </HoverableButton>
 
           <HoverableButton
-            style={styles.saveButton}
-            textStyle={styles.saveButtonText}
+            style={[
+              styles.saveButton,
+              (sideA.length === 0 && sideB.length === 0) && styles.saveButtonDisabled
+            ]}
+            textStyle={[
+              styles.saveButtonText,
+              (sideA.length === 0 && sideB.length === 0) && styles.saveButtonTextDisabled
+            ]}
             onPress={async () => {
+              if (sideA.length === 0 && sideB.length === 0) {
+                await triggerErrorHaptic();
+                showToast('Add at least one song to save', 'error');
+                return;
+              }
               await triggerLightHaptic();
               await persistMixtape();
               showToast('Mixtape saved!', 'success');
               router.push('/library');
             }}
             glowColor="#4a4a4a"
+            disabled={sideA.length === 0 && sideB.length === 0}
           >
             SAVE MIXTAPE
           </HoverableButton>
@@ -922,11 +934,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#3a3a3a',
   },
+  saveButtonDisabled: {
+    backgroundColor: '#1a1a1a',
+    borderColor: '#2a2a2a',
+    opacity: 0.5,
+  },
   saveButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#ffffff',
     letterSpacing: 0.5,
+  },
+  saveButtonTextDisabled: {
+    color: '#666666',
   },
   themeDesignerContainer: {
     flex: 1,
