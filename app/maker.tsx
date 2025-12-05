@@ -42,10 +42,16 @@ interface HoverableButtonProps {
   textStyle?: TextStyle | TextStyle[];
   children: React.ReactNode;
   glowColor?: string;
+<<<<<<< HEAD
   disabled?: boolean;
 }
 
 function HoverableButton({ onPress, style, textStyle, children, glowColor = '#d4b8ff', disabled = false }: HoverableButtonProps) {
+=======
+}
+
+function HoverableButton({ onPress, style, textStyle, children, glowColor = '#d4b8ff' }: HoverableButtonProps) {
+>>>>>>> 0e52c74 (animations)
   const [isHovered, setIsHovered] = useState(false);
 
   const webStyle = Platform.OS === 'web' && isHovered ? {
@@ -58,7 +64,10 @@ function HoverableButton({ onPress, style, textStyle, children, glowColor = '#d4
   return (
     <TouchableOpacity
       onPress={onPress}
+<<<<<<< HEAD
       disabled={disabled}
+=======
+>>>>>>> 0e52c74 (animations)
       style={[
         style,
         Platform.OS === 'web' && isHovered && {
@@ -160,16 +169,56 @@ export default function MixtapeCreatorScreen() {
   };
 
   useEffect(() => {
+<<<<<<< HEAD
     if (fontsLoaded || fontError) {
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);
 
   useEffect(() => {
+=======
+>>>>>>> 0e52c74 (animations)
     const newId = generateMixtapeId();
     setCurrentMixtapeId(newId);
   }, []);
 
+<<<<<<< HEAD
+=======
+  useEffect(() => {
+    async function prepare() {
+      try {
+        if (fontsLoaded || fontError) {
+          if (fontError) {
+            console.warn('Font loading error:', fontError);
+          }
+          await SplashScreen.hideAsync();
+        }
+      } catch (e) {
+        console.warn('Error hiding splash screen:', e);
+      }
+    }
+    prepare();
+  }, [fontsLoaded, fontError]);
+
+  // Timeout fallback - hide splash after 3 seconds even if font doesn't load
+  useEffect(() => {
+    const timeout = setTimeout(async () => {
+      try {
+        await SplashScreen.hideAsync();
+      } catch (e) {
+        console.warn('Timeout: Error hiding splash screen:', e);
+      }
+    }, 3000);
+
+    return () => clearTimeout(timeout);
+  }, []);
+
+  // Don't block rendering if font fails to load
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
+>>>>>>> 0e52c74 (animations)
   // Calculate total duration
   const calculateDuration = (tracks: Track[]): number => {
     return tracks.reduce((total, track) => total + (track.duration || 0), 0);
@@ -493,11 +542,14 @@ export default function MixtapeCreatorScreen() {
 
 
 
+<<<<<<< HEAD
   // Early return for font loading - must be after all hooks
   if (!fontsLoaded && !fontError) {
     return null;
   }
 
+=======
+>>>>>>> 0e52c74 (animations)
   return (
     <View style={styles.container}>
       <LoadingOverlay visible={isLoading} message={loadingMessage} />
@@ -635,6 +687,7 @@ export default function MixtapeCreatorScreen() {
           </HoverableButton>
 
           <HoverableButton
+<<<<<<< HEAD
             style={[
               styles.saveButton,
               (sideA.length === 0 && sideB.length === 0) && styles.saveButtonDisabled
@@ -649,13 +702,21 @@ export default function MixtapeCreatorScreen() {
                 showToast('Add at least one song to save', 'error');
                 return;
               }
+=======
+            style={styles.saveButton}
+            textStyle={styles.saveButtonText}
+            onPress={async () => {
+>>>>>>> 0e52c74 (animations)
               await triggerLightHaptic();
               await persistMixtape();
               showToast('Mixtape saved!', 'success');
               router.push('/library');
             }}
             glowColor="#4a4a4a"
+<<<<<<< HEAD
             disabled={sideA.length === 0 && sideB.length === 0}
+=======
+>>>>>>> 0e52c74 (animations)
           >
             SAVE MIXTAPE
           </HoverableButton>
@@ -937,20 +998,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#3a3a3a',
   },
+<<<<<<< HEAD
   saveButtonDisabled: {
     backgroundColor: '#1a1a1a',
     borderColor: '#2a2a2a',
     opacity: 0.5,
   },
+=======
+>>>>>>> 0e52c74 (animations)
   saveButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#ffffff',
     letterSpacing: 0.5,
   },
+<<<<<<< HEAD
   saveButtonTextDisabled: {
     color: '#666666',
   },
+=======
+>>>>>>> 0e52c74 (animations)
   themeDesignerContainer: {
     flex: 1,
     backgroundColor: '#0a0a0a',

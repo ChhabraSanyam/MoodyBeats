@@ -19,6 +19,10 @@
     "@react-navigation/elements": "^2.6.3",
     "@react-navigation/native": "^7.1.8",
     "expo": "~54.0.25",
+<<<<<<< HEAD
+=======
+    "expo-audio": "~1.0.15",
+>>>>>>> 0e52c74 (animations)
     "expo-av": "^16.0.7",
     "expo-constants": "~18.0.10",
     "expo-crypto": "^15.0.7",

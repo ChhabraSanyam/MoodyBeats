@@ -1,4 +1,5 @@
 import { useRouter } from "expo-router";
+<<<<<<< HEAD
 import { StyleSheet, Text, View } from "react-native";
 import { Button } from "../components";
 import { triggerLightHaptic } from "../utils/haptics";
@@ -6,6 +7,59 @@ import { triggerLightHaptic } from "../utils/haptics";
 export default function Index() {
   const router = useRouter();
 
+=======
+import { useEffect } from "react";
+import { Platform, StyleSheet, Text, View } from "react-native";
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
+import { Button } from "../components";
+import { triggerLightHaptic } from "../utils/haptics";
+
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
+
+export default function Index() {
+  const router = useRouter();
+
+  // Load Staatliches font
+  const [fontsLoaded, fontError] = useFonts({
+    'Staatliches': require('../assets/fonts/Staatliches-Regular.ttf'),
+  });
+
+  useEffect(() => {
+    async function prepare() {
+      try {
+        if (fontsLoaded || fontError) {
+          if (fontError) {
+            console.warn('Font loading error on index:', fontError);
+          }
+          await SplashScreen.hideAsync();
+        }
+      } catch (e) {
+        console.warn('Error hiding splash screen on index:', e);
+      }
+    }
+    prepare();
+  }, [fontsLoaded, fontError]);
+
+  // Timeout fallback - hide splash after 3 seconds even if font doesn't load
+  useEffect(() => {
+    const timeout = setTimeout(async () => {
+      try {
+        await SplashScreen.hideAsync();
+      } catch (e) {
+        console.warn('Timeout: Error hiding splash screen on index:', e);
+      }
+    }, 3000);
+
+    return () => clearTimeout(timeout);
+  }, []);
+
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
+>>>>>>> 0e52c74 (animations)
   const handleCreateMixtape = async () => {
     await triggerLightHaptic();
     router.push('/maker');
@@ -63,7 +117,11 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 48,
+<<<<<<< HEAD
     fontFamily: 'Staatliches',
+=======
+    fontFamily: Platform.OS === 'web' ? 'Staatliches' : 'Staatliches',
+>>>>>>> 0e52c74 (animations)
     color: '#ffffff',
     marginBottom: 8,
   },

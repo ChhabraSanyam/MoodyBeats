@@ -19,7 +19,18 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "edgeToEdgeEnabled": true,
+<<<<<<< HEAD
       "predictiveBackGestureEnabled": false
+=======
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.MODIFY_AUDIO_SETTINGS"
+      ],
+      "package": "com.anonymous.moodybeats"
+>>>>>>> 0e52c74 (animations)
     },
     "web": {
       "output": "static",
@@ -38,7 +49,12 @@
             "backgroundColor": "#000000"
           }
         }
+<<<<<<< HEAD
       ]
+=======
+      ],
+      "expo-audio"
+>>>>>>> 0e52c74 (animations)
     ],
     "experiments": {
       "typedRoutes": true,

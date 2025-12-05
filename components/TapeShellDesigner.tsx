@@ -3,8 +3,15 @@
  * Modern UI for tape shell customization
  */
 
+<<<<<<< HEAD
 import React, { useState, useEffect } from 'react';
 import {
+=======
+import React, { useState, useEffect, useRef } from 'react';
+import {
+    Animated,
+    PanResponder,
+>>>>>>> 0e52c74 (animations)
     Platform,
     ScrollView,
     StyleSheet,
@@ -16,13 +23,53 @@ import {
 } from 'react-native';
 import { TapeTheme } from '../models';
 
+<<<<<<< HEAD
 // Inject CSS animations for shooting stars (web only)
+=======
+// Inject CSS animations and 3D styles (web only)
+>>>>>>> 0e52c74 (animations)
 if (Platform.OS === 'web' && typeof document !== 'undefined') {
   const styleId = 'shooting-star-animations';
   if (!document.getElementById(styleId)) {
     const style = document.createElement('style');
     style.id = styleId;
     style.textContent = `
+<<<<<<< HEAD
+=======
+      .tape-3d-container {
+        position: relative;
+        transform-style: preserve-3d;
+      }
+      
+      .tape-3d-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: inherit;
+        border-radius: inherit;
+        transform: translateZ(-15px);
+        filter: brightness(0.7);
+        z-index: -1;
+      }
+      
+      .tape-3d-container::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: inherit;
+        border-radius: inherit;
+        transform: translateZ(-30px);
+        filter: brightness(0.5);
+        z-index: -2;
+      }
+      
+>>>>>>> 0e52c74 (animations)
       @keyframes shootingStar1 {
         0% {
           transform: translateX(0) translateY(0);
@@ -311,6 +358,18 @@ export default function TapeShellDesigner({
 }: TapeShellDesignerProps) {
   const [selectedColor, setSelectedColor] = useState('#EC4899');
   const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
+<<<<<<< HEAD
+=======
+  const [isDragging, setIsDragging] = useState(false);
+  const [tiltX, setTiltX] = useState(0);
+  const [tiltY, setTiltY] = useState(0);
+  
+  // Mobile animation values
+  const tiltAnimX = useRef(new Animated.Value(0)).current;
+  const tiltAnimY = useRef(new Animated.Value(0)).current;
+  const panStartX = useRef(0);
+  const panStartY = useRef(0);
+>>>>>>> 0e52c74 (animations)
 
   const handleColorSelect = (color: string) => {
     setSelectedColor(color);
@@ -333,15 +392,217 @@ export default function TapeShellDesigner({
       onThemeChange({
         preset: preset.preset,
         pattern: shellColor,
+<<<<<<< HEAD
+=======
+        texture: presetId, // Store the preset ID so we can render it correctly later
+>>>>>>> 0e52c74 (animations)
       });
     }
   };
 
+<<<<<<< HEAD
+=======
+  // 3D Tilt handlers for web
+  const handleMouseDown = (e: any) => {
+    if (Platform.OS === 'web') {
+      setIsDragging(true);
+    }
+  };
+
+  const handleMouseMove = (e: any) => {
+    if (Platform.OS === 'web' && isDragging) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+      
+      // Calculate tilt based on mouse position (increased to ±30 degrees for more visible sides)
+      const maxTilt = 30;
+      const newTiltY = ((x - centerX) / centerX) * maxTilt;
+      const newTiltX = -((y - centerY) / centerY) * maxTilt;
+      
+      setTiltX(newTiltX);
+      setTiltY(newTiltY);
+    }
+  };
+
+  const handleMouseUp = () => {
+    if (Platform.OS === 'web') {
+      setIsDragging(false);
+      // Smooth return to center
+      setTiltX(0);
+      setTiltY(0);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (Platform.OS === 'web') {
+      setIsDragging(false);
+      setTiltX(0);
+      setTiltY(0);
+    }
+  };
+
+  // Mobile pan responder for touch gestures
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => Platform.OS !== 'web',
+      onMoveShouldSetPanResponder: () => Platform.OS !== 'web',
+      onPanResponderGrant: (evt) => {
+        if (Platform.OS !== 'web') {
+          panStartX.current = evt.nativeEvent.pageX;
+          panStartY.current = evt.nativeEvent.pageY;
+          setIsDragging(true);
+        }
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        if (Platform.OS !== 'web') {
+          // Calculate tilt based on drag distance (limited to ±15 degrees for mobile)
+          const maxTilt = 15;
+          const sensitivity = 0.15;
+          const newTiltY = Math.max(-maxTilt, Math.min(maxTilt, gestureState.dx * sensitivity));
+          const newTiltX = Math.max(-maxTilt, Math.min(maxTilt, -gestureState.dy * sensitivity));
+          
+          tiltAnimX.setValue(newTiltX);
+          tiltAnimY.setValue(newTiltY);
+        }
+      },
+      onPanResponderRelease: () => {
+        if (Platform.OS !== 'web') {
+          setIsDragging(false);
+          // Smooth return to center
+          Animated.parallel([
+            Animated.spring(tiltAnimX, {
+              toValue: 0,
+              useNativeDriver: true,
+              tension: 40,
+              friction: 7,
+            }),
+            Animated.spring(tiltAnimY, {
+              toValue: 0,
+              useNativeDriver: true,
+              tension: 40,
+              friction: 7,
+            }),
+          ]).start();
+        }
+      },
+    })
+  ).current;
+
+  // Render the tilt container based on platform
+  const TiltContainer = Platform.OS === 'web' ? View : Animated.View;
+  const tiltContainerProps = Platform.OS === 'web' 
+    ? {
+        // @ts-ignore - Web-specific props
+        style: [
+          styles.tiltContainer,
+          {
+            transform: `perspective(1200px) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`,
+            transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+            cursor: isDragging ? 'grabbing' : 'grab',
+            transformStyle: 'preserve-3d',
+          },
+        ],
+        onMouseDown: handleMouseDown,
+        onMouseMove: handleMouseMove,
+        onMouseUp: handleMouseUp,
+        onMouseLeave: handleMouseLeave,
+      }
+    : {
+        ...panResponder.panHandlers,
+        style: [
+          styles.tiltContainer,
+          {
+            transform: [
+              { perspective: 1000 },
+              { 
+                rotateX: tiltAnimX.interpolate({
+                  inputRange: [-15, 15],
+                  outputRange: ['-15deg', '15deg'],
+                }),
+              },
+              { 
+                rotateY: tiltAnimY.interpolate({
+                  inputRange: [-15, 15],
+                  outputRange: ['-15deg', '15deg'],
+                }),
+              },
+            ],
+          },
+        ],
+      };
+
+>>>>>>> 0e52c74 (animations)
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollContainer}>
         {/* Tape Preview */}
         <View style={styles.previewSection}>
+<<<<<<< HEAD
+=======
+          <TiltContainer {...tiltContainerProps}>
+          {/* 3D Depth Layers - Dark grey sides for all colors */}
+          {Platform.OS === 'web' ? (
+            <>
+              {[...Array(8)].map((_, i) => {
+                const depth = (i + 1) * 8; // 8px spacing between layers
+                const opacity = 0.9 - (i * 0.1); // Gradual fade
+                return (
+                  <View
+                    key={i}
+                    // @ts-ignore
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: 480,
+                      height: 300,
+                      backgroundColor: '#2a2a2a',
+                      borderRadius: 12,
+                      transform: `translateZ(-${depth}px)`,
+                      opacity: opacity,
+                      pointerEvents: 'none',
+                    }}
+                  />
+                );
+              })}
+            </>
+          ) : (
+            <>
+              {/* Mobile: Depth layers - inverted movement for correct 3D perspective */}
+              {[...Array(8)].map((_, i) => {
+                const layerDepth = (i + 1) * 0.1; // Depth multiplier
+                const baseOpacity = 0.9 - (i * 0.1); // Gradual fade
+                return (
+                  <Animated.View
+                    key={`depth-${i}`}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: 320,
+                      height: 200,
+                      backgroundColor: '#2a2a2a', // Dark grey depth
+                      borderRadius: 12,
+                      opacity: baseOpacity,
+                      zIndex: -1 - i,
+                      transform: [
+                        {
+                          translateX: Animated.multiply(tiltAnimY, -layerDepth), // Inverted
+                        },
+                        {
+                          translateY: Animated.multiply(tiltAnimX, layerDepth), // Inverted
+                        },
+                      ],
+                    }}
+                  />
+                );
+              })}
+            </>
+          )}
+>>>>>>> 0e52c74 (animations)
           <View style={[
             styles.tapeShell,
             { backgroundColor: selectedColor },
@@ -354,7 +615,11 @@ export default function TapeShellDesigner({
               backgroundRepeat: 'no-repeat',
             },
            selectedPreset === 'flowers' && Platform.OS === 'web' && {
+<<<<<<< HEAD
   backgroundColor: `#EAB308`,
+=======
+  background: `#EAB308`,
+>>>>>>> 0e52c74 (animations)
   backgroundImage: `
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 300'%3E%3Crect width='480' height='300' fill='%23EAB308'/%3E%3Cg%3E%3C!-- Top border flowers --%3E%3C!-- Violet --%3E%3Ccircle cx='60' cy='10' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='68' cy='15' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='68' cy='25' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='60' cy='30' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='52' cy='25' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='52' cy='15' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='60' cy='20' r='5' fill='%23F97316'/%3E%3C!-- Indigo --%3E%3Ccircle cx='160' cy='10' r='6' fill='%234F46E5'/%3E%3Ccircle cx='168' cy='15' r='6' fill='%234F46E5'/%3E%3Ccircle cx='168' cy='25' r='6' fill='%234F46E5'/%3E%3Ccircle cx='160' cy='30' r='6' fill='%234F46E5'/%3E%3Ccircle cx='152' cy='25' r='6' fill='%234F46E5'/%3E%3Ccircle cx='152' cy='15' r='6' fill='%234F46E5'/%3E%3Ccircle cx='160' cy='20' r='5' fill='%23F97316'/%3E%3C!-- Blue --%3E%3Ccircle cx='240' cy='10' r='6' fill='%233B82F6'/%3E%3Ccircle cx='248' cy='15' r='6' fill='%233B82F6'/%3E%3Ccircle cx='248' cy='25' r='6' fill='%233B82F6'/%3E%3Ccircle cx='240' cy='30' r='6' fill='%233B82F6'/%3E%3Ccircle cx='232' cy='25' r='6' fill='%233B82F6'/%3E%3Ccircle cx='232' cy='15' r='6' fill='%233B82F6'/%3E%3Ccircle cx='240' cy='20' r='5' fill='%23F97316'/%3E%3C!-- Green --%3E%3Ccircle cx='320' cy='10' r='6' fill='%2322C55E'/%3E%3Ccircle cx='328' cy='15' r='6' fill='%2322C55E'/%3E%3Ccircle cx='328' cy='25' r='6' fill='%2322C55E'/%3E%3Ccircle cx='320' cy='30' r='6' fill='%2322C55E'/%3E%3Ccircle cx='312' cy='25' r='6' fill='%2322C55E'/%3E%3Ccircle cx='312' cy='15' r='6' fill='%2322C55E'/%3E%3Ccircle cx='320' cy='20' r='5' fill='%23F97316'/%3E%3C!-- Red --%3E%3Ccircle cx='420' cy='10' r='6' fill='%23EF4444'/%3E%3Ccircle cx='428' cy='15' r='6' fill='%23EF4444'/%3E%3Ccircle cx='428' cy='25' r='6' fill='%23EF4444'/%3E%3Ccircle cx='420' cy='30' r='6' fill='%23EF4444'/%3E%3Ccircle cx='412' cy='25' r='6' fill='%23EF4444'/%3E%3Ccircle cx='412' cy='15' r='6' fill='%23EF4444'/%3E%3Ccircle cx='420' cy='20' r='5' fill='%23F97316'/%3E%3C!-- Left border flowers --%3E%3C!-- Red --%3E%3Ccircle cx='25' cy='65' r='6' fill='%23EF4444'/%3E%3Ccircle cx='33' cy='70' r='6' fill='%23EF4444'/%3E%3Ccircle cx='33' cy='80' r='6' fill='%23EF4444'/%3E%3Ccircle cx='25' cy='85' r='6' fill='%23EF4444'/%3E%3Ccircle cx='17' cy='80' r='6' fill='%23EF4444'/%3E%3Ccircle cx='17' cy='70' r='6' fill='%23EF4444'/%3E%3Ccircle cx='25' cy='75' r='5' fill='%23F97316'/%3E%3C!-- Violet --%3E%3Ccircle cx='25' cy='140' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='33' cy='145' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='33' cy='155' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='25' cy='160' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='17' cy='155' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='17' cy='145' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='25' cy='150' r='5' fill='%23F97316'/%3E%3C!-- Indigo --%3E%3Ccircle cx='25' cy='215' r='6' fill='%234F46E5'/%3E%3Ccircle cx='33' cy='220' r='6' fill='%234F46E5'/%3E%3Ccircle cx='33' cy='230' r='6' fill='%234F46E5'/%3E%3Ccircle cx='25' cy='235' r='6' fill='%234F46E5'/%3E%3Ccircle cx='17' cy='230' r='6' fill='%234F46E5'/%3E%3Ccircle cx='17' cy='220' r='6' fill='%234F46E5'/%3E%3Ccircle cx='25' cy='225' r='5' fill='%23F97316'/%3E%3C!-- Right border flowers --%3E%3C!-- Blue --%3E%3Ccircle cx='455' cy='65' r='6' fill='%233B82F6'/%3E%3Ccircle cx='463' cy='70' r='6' fill='%233B82F6'/%3E%3Ccircle cx='463' cy='80' r='6' fill='%233B82F6'/%3E%3Ccircle cx='455' cy='85' r='6' fill='%233B82F6'/%3E%3Ccircle cx='447' cy='80' r='6' fill='%233B82F6'/%3E%3Ccircle cx='447' cy='70' r='6' fill='%233B82F6'/%3E%3Ccircle cx='455' cy='75' r='5' fill='%23F97316'/%3E%3C!-- Green --%3E%3Ccircle cx='455' cy='140' r='6' fill='%2322C55E'/%3E%3Ccircle cx='463' cy='145' r='6' fill='%2322C55E'/%3E%3Ccircle cx='463' cy='155' r='6' fill='%2322C55E'/%3E%3Ccircle cx='455' cy='160' r='6' fill='%2322C55E'/%3E%3Ccircle cx='447' cy='155' r='6' fill='%2322C55E'/%3E%3Ccircle cx='447' cy='145' r='6' fill='%2322C55E'/%3E%3Ccircle cx='455' cy='150' r='5' fill='%23F97316'/%3E%3C!-- Red --%3E%3Ccircle cx='455' cy='215' r='6' fill='%23EF4444'/%3E%3Ccircle cx='463' cy='220' r='6' fill='%23EF4444'/%3E%3Ccircle cx='463' cy='230' r='6' fill='%23EF4444'/%3E%3Ccircle cx='455' cy='235' r='6' fill='%23EF4444'/%3E%3Ccircle cx='447' cy='230' r='6' fill='%23EF4444'/%3E%3Ccircle cx='447' cy='220' r='6' fill='%23EF4444'/%3E%3Ccircle cx='455' cy='225' r='5' fill='%23F97316'/%3E%3C!-- Bottom border flowers --%3E%3C!-- Red --%3E%3Ccircle cx='60' cy='270' r='6' fill='%23EF4444'/%3E%3Ccircle cx='68' cy='275' r='6' fill='%23EF4444'/%3E%3Ccircle cx='68' cy='285' r='6' fill='%23EF4444'/%3E%3Ccircle cx='60' cy='290' r='6' fill='%23EF4444'/%3E%3Ccircle cx='52' cy='285' r='6' fill='%23EF4444'/%3E%3Ccircle cx='52' cy='275' r='6' fill='%23EF4444'/%3E%3Ccircle cx='60' cy='280' r='5' fill='%23F97316'/%3E%3C!-- Violet --%3E%3Ccircle cx='160' cy='270' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='168' cy='275' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='168' cy='285' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='160' cy='290' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='152' cy='285' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='152' cy='275' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='160' cy='280' r='5' fill='%23F97316'/%3E%3C!-- Indigo --%3E%3Ccircle cx='240' cy='270' r='6' fill='%234F46E5'/%3E%3Ccircle cx='248' cy='275' r='6' fill='%234F46E5'/%3E%3Ccircle cx='248' cy='285' r='6' fill='%234F46E5'/%3E%3Ccircle cx='240' cy='290' r='6' fill='%234F46E5'/%3E%3Ccircle cx='232' cy='285' r='6' fill='%234F46E5'/%3E%3Ccircle cx='232' cy='275' r='6' fill='%234F46E5'/%3E%3Ccircle cx='240' cy='280' r='5' fill='%23F97316'/%3E%3C!-- Blue --%3E%3Ccircle cx='320' cy='270' r='6' fill='%233B82F6'/%3E%3Ccircle cx='328' cy='275' r='6' fill='%233B82F6'/%3E%3Ccircle cx='328' cy='285' r='6' fill='%233B82F6'/%3E%3Ccircle cx='320' cy='290' r='6' fill='%233B82F6'/%3E%3Ccircle cx='312' cy='285' r='6' fill='%233B82F6'/%3E%3Ccircle cx='312' cy='275' r='6' fill='%233B82F6'/%3E%3Ccircle cx='320' cy='280' r='5' fill='%23F97316'/%3E%3C!-- Green --%3E%3Ccircle cx='420' cy='270' r='6' fill='%2322C55E'/%3E%3Ccircle cx='428' cy='275' r='6' fill='%2322C55E'/%3E%3Ccircle cx='428' cy='285' r='6' fill='%2322C55E'/%3E%3Ccircle cx='420' cy='290' r='6' fill='%2322C55E'/%3E%3Ccircle cx='412' cy='285' r='6' fill='%2322C55E'/%3E%3Ccircle cx='412' cy='275' r='6' fill='%2322C55E'/%3E%3Ccircle cx='420' cy='280' r='5' fill='%23F97316'/%3E%3C/g%3E%3C/svg%3E")
   `,
@@ -363,7 +628,11 @@ export default function TapeShellDesigner({
               backgroundRepeat: 'no-repeat',
             },
             selectedPreset === 'galaxy' && Platform.OS === 'web' && {
+<<<<<<< HEAD
               backgroundImage: `
+=======
+              background: `
+>>>>>>> 0e52c74 (animations)
                 radial-gradient(circle at 8% 5%, rgba(255, 255, 255, 0.95) 1px, transparent 1px),
                 radial-gradient(circle at 15% 8%, rgba(255, 255, 255, 0.4) 0.8px, transparent 0.8px),
                 radial-gradient(circle at 25% 6%, rgba(255, 255, 255, 0.75) 1px, transparent 1px),
@@ -522,7 +791,11 @@ export default function TapeShellDesigner({
                     left: '-100px',
                     width: '80px',
                     height: '2px',
+<<<<<<< HEAD
                     background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent)',
+=======
+                    backgroundImage: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent)',
+>>>>>>> 0e52c74 (animations)
                     borderRadius: '50%',
                     animation: 'shootingStar1 3s ease-in-out infinite',
                     animationDelay: '0s',
@@ -536,7 +809,11 @@ export default function TapeShellDesigner({
                     left: '-100px',
                     width: '60px',
                     height: '1.5px',
+<<<<<<< HEAD
                     background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent)',
+=======
+                    backgroundImage: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent)',
+>>>>>>> 0e52c74 (animations)
                     borderRadius: '50%',
                     animation: 'shootingStar2 4s ease-in-out infinite',
                     animationDelay: '1.5s',
@@ -550,7 +827,11 @@ export default function TapeShellDesigner({
                     left: '-100px',
                     width: '70px',
                     height: '2px',
+<<<<<<< HEAD
                     background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent)',
+=======
+                    backgroundImage: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent)',
+>>>>>>> 0e52c74 (animations)
                     borderRadius: '50%',
                     animation: 'shootingStar3 3.5s ease-in-out infinite',
                     animationDelay: '2.5s',
@@ -564,7 +845,11 @@ export default function TapeShellDesigner({
                     left: '-100px',
                     width: '50px',
                     height: '1.5px',
+<<<<<<< HEAD
                     background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent)',
+=======
+                    backgroundImage: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.75), transparent)',
+>>>>>>> 0e52c74 (animations)
                     borderRadius: '50%',
                     animation: 'shootingStar4 4.5s ease-in-out infinite',
                     animationDelay: '3.5s',
@@ -653,6 +938,10 @@ export default function TapeShellDesigner({
               )}
             </View>
           </View>
+<<<<<<< HEAD
+=======
+          </TiltContainer>
+>>>>>>> 0e52c74 (animations)
         </View>
 
         {/* Color Selector */}
@@ -668,7 +957,11 @@ export default function TapeShellDesigner({
                 style={[
                   styles.colorSwatch,
                   { backgroundColor: color },
+<<<<<<< HEAD
                   selectedColor === color && styles.colorSwatchSelected,
+=======
+                  selectedColor === color && (styles.colorSwatchSelected as any),
+>>>>>>> 0e52c74 (animations)
                 ]}
                 onPress={() => handleColorSelect(color)}
               />
@@ -778,7 +1071,11 @@ export default function TapeShellDesigner({
                           left: '-50px',
                           width: '40px',
                           height: '1px',
+<<<<<<< HEAD
                           background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent)',
+=======
+                          backgroundImage: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), transparent)',
+>>>>>>> 0e52c74 (animations)
                           borderRadius: '50%',
                           animation: 'shootingStar1 3s ease-in-out infinite',
                           animationDelay: '0s',
@@ -792,7 +1089,11 @@ export default function TapeShellDesigner({
                           left: '-50px',
                           width: '35px',
                           height: '1px',
+<<<<<<< HEAD
                           background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent)',
+=======
+                          backgroundImage: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent)',
+>>>>>>> 0e52c74 (animations)
                           borderRadius: '50%',
                           animation: 'shootingStar3 3.5s ease-in-out infinite',
                           animationDelay: '1.5s',
@@ -895,12 +1196,22 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
   },
+<<<<<<< HEAD
+=======
+  tiltContainer: {
+    position: 'relative',
+    ...(Platform.OS !== 'web' && {
+      overflow: 'visible',
+    }),
+  },
+>>>>>>> 0e52c74 (animations)
   tapeShell: {
     width: 320,
     height: 200,
     backgroundColor: '#3a3a3a',
     borderRadius: 12,
     padding: 30,
+<<<<<<< HEAD
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -913,6 +1224,31 @@ const styles = StyleSheet.create({
       height: 300,
       padding: 45,
     }),
+=======
+    position: 'relative',
+    overflow: Platform.OS === 'web' ? 'hidden' : 'visible',
+    ...(Platform.OS === 'web' 
+      ? {
+          width: 480,
+          height: 300,
+          padding: 45,
+          boxShadow: `
+            0 20px 60px rgba(0, 0, 0, 0.3),
+            0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+            -8px 0 20px -8px rgba(0, 0, 0, 0.5),
+            8px 0 20px -8px rgba(0, 0, 0, 0.5),
+            0 -8px 20px -8px rgba(0, 0, 0, 0.5),
+            0 8px 20px -8px rgba(0, 0, 0, 0.5)
+          `,
+        }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+          elevation: 8,
+        }),
+>>>>>>> 0e52c74 (animations)
   },
   loveBackground: {
     position: 'absolute',
@@ -1043,11 +1379,23 @@ const styles = StyleSheet.create({
   },
   colorSwatchSelected: {
     borderColor: '#ffffff',
+<<<<<<< HEAD
     shadowColor: '#ffffff',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.8,
     shadowRadius: 8,
     elevation: 8,
+=======
+    ...(Platform.OS === 'web' 
+      ? { boxShadow: '0 0 8px rgba(255, 255, 255, 0.8)' }
+      : {
+          shadowColor: '#ffffff',
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.8,
+          shadowRadius: 8,
+          elevation: 8,
+        }),
+>>>>>>> 0e52c74 (animations)
   },
   presetLabel: {
     fontSize: 22,
@@ -1093,12 +1441,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#ffffff',
+<<<<<<< HEAD
     textShadowColor: 'rgba(0, 0, 0, 0.8)',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
     ...(Platform.OS === 'web' && {
       fontSize: 18,
     }),
+=======
+    ...(Platform.OS === 'web' 
+      ? { 
+          fontSize: 18,
+          textShadow: '0px 1px 4px rgba(0, 0, 0, 0.8)',
+        }
+      : {
+          textShadowColor: 'rgba(0, 0, 0, 0.8)',
+          textShadowOffset: { width: 0, height: 1 },
+          textShadowRadius: 4,
+        }),
+>>>>>>> 0e52c74 (animations)
   },
   buttonSection: {
     padding: 20,

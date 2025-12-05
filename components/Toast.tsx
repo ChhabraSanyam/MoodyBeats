@@ -139,11 +139,23 @@ const styles = StyleSheet.create({
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
+<<<<<<< HEAD
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+=======
+    ...(Platform.OS === 'web' 
+      ? { boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.3)' }
+      : {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+          elevation: 8,
+        }),
+>>>>>>> 0e52c74 (animations)
     zIndex: 9999,
   },
   content: {

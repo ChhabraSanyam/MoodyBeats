@@ -53,6 +53,10 @@ export interface MixtapeMetadata {
     envelope: {
       color: string;
       sigil?: string;
+<<<<<<< HEAD
+=======
+      signature?: string;
+>>>>>>> 0e52c74 (animations)
     };
   };
 }
@@ -332,7 +336,12 @@ export class ArchiveManager {
         },
         envelope: {
           color: mixtape.envelope.color,
+<<<<<<< HEAD
           sigil: mixtape.envelope.sigil
+=======
+          sigil: mixtape.envelope.sigil,
+          signature: mixtape.envelope.signature
+>>>>>>> 0e52c74 (animations)
         }
       }
     };
@@ -565,9 +574,40 @@ export class ArchiveManager {
       const audioRepo = createAudioRepository();
       const themeRepo = createThemeRepository();
 
+<<<<<<< HEAD
       // Convert metadata to Mixtape object
       const mixtape: Mixtape = {
         id: archiveData.metadata.mixtape.id,
+=======
+      // Create a unique fingerprint for this mixtape based on its content
+      // This allows same songs in different mixtapes but prevents duplicate imports
+      const mixtapeFingerprint = this.createMixtapeFingerprint(archiveData.metadata.mixtape);
+      
+      // Check if this exact mixtape already exists in library
+      const allMixtapes = await mixtapeRepo.getAll();
+      const duplicateExists = allMixtapes.some(existing => {
+        const existingFingerprint = this.createMixtapeFingerprint({
+          title: existing.title,
+          note: existing.note,
+          sideA: existing.sideA.map(t => ({ id: t.id, title: t.title, artist: t.artist, duration: t.duration, source: t.source })),
+          sideB: existing.sideB.map(t => ({ id: t.id, title: t.title, artist: t.artist, duration: t.duration, source: t.source })),
+          theme: existing.theme,
+          envelope: existing.envelope,
+        });
+        return existingFingerprint === mixtapeFingerprint;
+      });
+      
+      if (duplicateExists) {
+        throw new Error('This mixtape already exists in your library');
+      }
+      
+      // Generate a new ID for the imported mixtape
+      const newMixtapeId = `mixtape-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      
+      // Convert metadata to Mixtape object with new ID
+      const mixtape: Mixtape = {
+        id: newMixtapeId,
+>>>>>>> 0e52c74 (animations)
         title: archiveData.metadata.mixtape.title,
         note: archiveData.metadata.mixtape.note,
         sideA: archiveData.metadata.mixtape.sideA,
@@ -578,12 +618,15 @@ export class ArchiveManager {
         updatedAt: new Date()
       };
 
+<<<<<<< HEAD
       // Check if mixtape already exists
       const exists = await mixtapeRepo.exists(mixtape.id);
       if (exists) {
         throw new Error(`Mixtape with ID ${mixtape.id} already exists in library`);
       }
 
+=======
+>>>>>>> 0e52c74 (animations)
       // Save audio files from archive and build a map of track IDs to saved URIs
       const savedAudioFiles = new Map<string, string>();
       
@@ -707,4 +750,49 @@ export class ArchiveManager {
       reader.readAsArrayBuffer(blob);
     });
   }
+<<<<<<< HEAD
+=======
+
+  /**
+   * Create a unique fingerprint for a mixtape based on its content
+   * This allows detecting duplicate imports while allowing same songs in different mixtapes
+   */
+  private createMixtapeFingerprint(mixtapeData: any): string {
+    // Create a string representation of the mixtape's unique properties
+    const fingerprintData = {
+      title: mixtapeData.title,
+      note: mixtapeData.note || '',
+      sideA: mixtapeData.sideA.map((t: any) => ({
+        title: t.title,
+        artist: t.artist || '',
+        duration: t.duration,
+      })),
+      sideB: mixtapeData.sideB.map((t: any) => ({
+        title: t.title,
+        artist: t.artist || '',
+        duration: t.duration,
+      })),
+      theme: {
+        preset: mixtapeData.theme.preset,
+        pattern: mixtapeData.theme.pattern || '',
+        texture: mixtapeData.theme.texture || '',
+      },
+      envelope: {
+        color: mixtapeData.envelope.color,
+        sigil: mixtapeData.envelope.sigil || '',
+        signature: mixtapeData.envelope.signature || undefined,
+      },
+    };
+    
+    // Create a simple hash from the JSON string
+    const jsonString = JSON.stringify(fingerprintData);
+    let hash = 0;
+    for (let i = 0; i < jsonString.length; i++) {
+      const char = jsonString.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return hash.toString(36);
+  }
+>>>>>>> 0e52c74 (animations)
 }
