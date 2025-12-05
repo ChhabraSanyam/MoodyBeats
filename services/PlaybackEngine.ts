@@ -8,10 +8,6 @@ import { Audio, AVPlaybackStatus } from 'expo-av';
 import { Mixtape, PlaybackState, Track } from '../models';
 import { AudioEffectsManager, PitchShiftManager } from './AudioEffectsManager';
 import { GlitchController } from './GlitchController';
-<<<<<<< HEAD
-import { SoundEffects } from './SoundEffects';
-=======
->>>>>>> 0e52c74 (animations)
 
 type StateChangeCallback = (state: PlaybackState) => void;
 
@@ -39,12 +35,6 @@ export class PlaybackEngine {
   private rewSpeedIncreaseInterval: ReturnType<typeof setInterval> | null = null;
   private audioEffects: AudioEffectsManager;
   private glitchController: GlitchController;
-<<<<<<< HEAD
-  private pausePlayPressCount: number = 0;
-  private lastPausePlayPressTime: number = 0;
-  private pausePlayResetTimeout: ReturnType<typeof setTimeout> | null = null;
-=======
->>>>>>> 0e52c74 (animations)
 
   constructor() {
     this.state = this.createInitialState();
@@ -52,11 +42,6 @@ export class PlaybackEngine {
     this.glitchController = new GlitchController();
     this.startOverheatDecay();
     this.setupGlitchListener();
-<<<<<<< HEAD
-    // Initialize sound effects
-    SoundEffects.getInstance().initialize().catch(console.error);
-=======
->>>>>>> 0e52c74 (animations)
   }
 
   /**
@@ -323,12 +308,6 @@ export class PlaybackEngine {
 
     // Record button press for glitch detection
     this.glitchController.recordButtonPress('play');
-<<<<<<< HEAD
-    
-    // Track consecutive pause/play presses
-    this.trackPausePlayPress();
-=======
->>>>>>> 0e52c74 (animations)
 
     // Check if we're at the end of the side - if so, restart from beginning
     const tracks = this.getCurrentSideTracks();
@@ -366,12 +345,6 @@ export class PlaybackEngine {
 
     // Record button press for glitch detection
     this.glitchController.recordButtonPress('pause');
-<<<<<<< HEAD
-    
-    // Track consecutive pause/play presses
-    this.trackPausePlayPress();
-=======
->>>>>>> 0e52c74 (animations)
 
     // Stop FF/REW if active
     if (this.state.isFastForwarding) {
@@ -382,12 +355,9 @@ export class PlaybackEngine {
     }
 
     try {
-<<<<<<< HEAD
-=======
       // Play clunk sound effect
       await this.audioEffects.playClunkSound();
       
->>>>>>> 0e52c74 (animations)
       await this.sound.pauseAsync();
       this.state.isPlaying = false;
       this.notifyStateChange();
@@ -405,17 +375,6 @@ export class PlaybackEngine {
       return;
     }
 
-<<<<<<< HEAD
-    // Check if in glitch mode - play error sound and prevent FF
-    if (this.state.glitchMode && this.glitchController.isGlitchActive(this.state.glitchMode)) {
-      console.log('FF pressed during glitch mode! Playing error sound...');
-      // Play random FF error sound during glitch mode
-      await SoundEffects.getInstance().playRandomFFError();
-      return;
-    }
-
-=======
->>>>>>> 0e52c74 (animations)
     // Check if overheated - disable FF/REW when overheated
     if (this.state.isOverheated) {
       return;
@@ -593,17 +552,6 @@ export class PlaybackEngine {
       return;
     }
 
-<<<<<<< HEAD
-    // Check if in glitch mode - play rewind error sound and prevent REW
-    if (this.state.glitchMode && this.glitchController.isGlitchActive(this.state.glitchMode)) {
-      console.log('REW pressed during glitch mode! Playing rewind error sound...');
-      // Play rewind error sound during glitch mode
-      await SoundEffects.getInstance().playRewindError();
-      return;
-    }
-
-=======
->>>>>>> 0e52c74 (animations)
     // Check if overheated - disable FF/REW when overheated
     if (this.state.isOverheated) {
       return;
@@ -925,45 +873,6 @@ export class PlaybackEngine {
   }
 
   /**
-<<<<<<< HEAD
-   * Track consecutive pause/play button presses
-   * Play pause sound if pressed more than 3 times consecutively
-   */
-  private trackPausePlayPress(): void {
-    const now = Date.now();
-    const timeSinceLastPress = now - this.lastPausePlayPressTime;
-    
-    // Reset counter if more than 2 seconds have passed
-    if (timeSinceLastPress > 2000) {
-      this.pausePlayPressCount = 1;
-    } else {
-      this.pausePlayPressCount++;
-    }
-    
-    this.lastPausePlayPressTime = now;
-    
-    // Clear existing timeout
-    if (this.pausePlayResetTimeout) {
-      clearTimeout(this.pausePlayResetTimeout);
-    }
-    
-    // Reset counter after 2 seconds of inactivity
-    this.pausePlayResetTimeout = setTimeout(() => {
-      this.pausePlayPressCount = 0;
-    }, 2000);
-    
-    // Play pause sound if pressed more than 3 times
-    if (this.pausePlayPressCount > 3) {
-      console.log('Pause/Play pressed more than 3 times consecutively!');
-      SoundEffects.getInstance().playPause().catch(console.error);
-      // Reset counter after playing sound
-      this.pausePlayPressCount = 0;
-    }
-  }
-
-  /**
-=======
->>>>>>> 0e52c74 (animations)
    * Increment overheat meter when FF/REW is used
    * Requirements: 9.1, 9.2, 11.3
    */
@@ -1051,13 +960,6 @@ export class PlaybackEngine {
       clearTimeout(this.cooldownTimeout);
       this.cooldownTimeout = null;
     }
-<<<<<<< HEAD
-    if (this.pausePlayResetTimeout) {
-      clearTimeout(this.pausePlayResetTimeout);
-      this.pausePlayResetTimeout = null;
-    }
-=======
->>>>>>> 0e52c74 (animations)
 
     if (this.sound) {
       await this.sound.unloadAsync();

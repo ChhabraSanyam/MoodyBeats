@@ -20,12 +20,8 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-<<<<<<< HEAD
-import { Button, EnvelopeIntro } from '../components';
-=======
 import { Button } from '../components';
 import EnvelopeOpeningAnimation from '../components/EnvelopeOpeningAnimation';
->>>>>>> 0e52c74 (animations)
 import { Mixtape } from '../models';
 import { createAudioRepository, createMixtapeRepository } from '../repositories/adapters/StorageFactory';
 import { ArchiveManager } from '../services/ArchiveManager';
@@ -40,11 +36,7 @@ export default function MixtapeLibraryScreen() {
   const [isImporting, setIsImporting] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [mixtapeToDelete, setMixtapeToDelete] = useState<{ id: string; title: string } | null>(null);
-<<<<<<< HEAD
-  const [showEnvelopeIntro, setShowEnvelopeIntro] = useState(false);
-=======
   const [showEnvelopeAnimation, setShowEnvelopeAnimation] = useState(false);
->>>>>>> 0e52c74 (animations)
   const [importedMixtape, setImportedMixtape] = useState<Mixtape | null>(null);
   const [loadedCount, setLoadedCount] = useState(10); // Initial batch size
   const router = useRouter();
@@ -235,15 +227,9 @@ export default function MixtapeLibraryScreen() {
       setImportUrl('');
       await loadMixtapes();
       
-<<<<<<< HEAD
-      // Show envelope intro animation
-      setImportedMixtape(mixtape);
-      setShowEnvelopeIntro(true);
-=======
       // Show envelope opening animation
       setImportedMixtape(mixtape);
       setShowEnvelopeAnimation(true);
->>>>>>> 0e52c74 (animations)
     } catch (error) {
       console.error('Error importing from URL:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -260,11 +246,7 @@ export default function MixtapeLibraryScreen() {
   const handleImportFromFile = async () => {
     try {
       if (Platform.OS === 'web') {
-<<<<<<< HEAD
-        // Web: Use file input
-=======
         // Web: Use file input - create fresh input each time
->>>>>>> 0e52c74 (animations)
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.mixblues,application/zip';
@@ -273,15 +255,11 @@ export default function MixtapeLibraryScreen() {
           const target = e.target as HTMLInputElement;
           const file = target.files?.[0];
           
-<<<<<<< HEAD
-          if (!file) return;
-=======
           if (!file) {
             // Clean up input element
             input.remove();
             return;
           }
->>>>>>> 0e52c74 (animations)
           
           setIsImporting(true);
           setShowImportModal(false);
@@ -290,26 +268,15 @@ export default function MixtapeLibraryScreen() {
             const mixtape = await archiveManager.importFromFile(file);
             await loadMixtapes();
             
-<<<<<<< HEAD
-            // Show envelope intro animation
-            setImportedMixtape(mixtape);
-            setShowEnvelopeIntro(true);
-=======
             // Show envelope opening animation
             setImportedMixtape(mixtape);
             setShowEnvelopeAnimation(true);
->>>>>>> 0e52c74 (animations)
           } catch (error) {
             console.error('Error importing from file:', error);
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             Alert.alert('Import Failed', errorMessage);
           } finally {
             setIsImporting(false);
-<<<<<<< HEAD
-          }
-        };
-        
-=======
             // Clean up input element
             input.remove();
           }
@@ -320,7 +287,6 @@ export default function MixtapeLibraryScreen() {
           input.remove();
         };
         
->>>>>>> 0e52c74 (animations)
         input.click();
       } else {
         // Mobile: Use Expo DocumentPicker
@@ -352,15 +318,9 @@ export default function MixtapeLibraryScreen() {
           const mixtape = await archiveManager.importFromFile(arrayBuffer);
           await loadMixtapes();
 
-<<<<<<< HEAD
-          // Show envelope intro animation
-          setImportedMixtape(mixtape);
-          setShowEnvelopeIntro(true);
-=======
           // Show envelope opening animation
           setImportedMixtape(mixtape);
           setShowEnvelopeAnimation(true);
->>>>>>> 0e52c74 (animations)
         } catch (error) {
           console.error('Error importing from file:', error);
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -376,20 +336,6 @@ export default function MixtapeLibraryScreen() {
   };
 
   /**
-<<<<<<< HEAD
-   * Handle envelope intro animation completion
-   * Requirements: 13.3, 13.4, 13.5
-   */
-  const handleEnvelopeIntroComplete = () => {
-    setShowEnvelopeIntro(false);
-    if (importedMixtape) {
-      // Navigate to player to play the imported mixtape
-      router.push(`/player?id=${importedMixtape.id}`);
-      setImportedMixtape(null);
-    }
-  };
-
-=======
    * Handle envelope opening animation completion (for imported mixtapes)
    * Requirements: 13.3, 13.4, 13.5
    */
@@ -404,7 +350,6 @@ export default function MixtapeLibraryScreen() {
 
 
 
->>>>>>> 0e52c74 (animations)
   /**
    * Format date for display
    */
@@ -453,13 +398,6 @@ export default function MixtapeLibraryScreen() {
               styles.themeColor,
               {
                 backgroundColor: (() => {
-<<<<<<< HEAD
-                  // Use custom color if available
-                  if (mixtape.theme.customShellColor) {
-                    return mixtape.theme.customShellColor;
-                  }
-=======
->>>>>>> 0e52c74 (animations)
                   // Use pattern color if available (this is the shell color)
                   if (mixtape.theme.pattern) {
                     return mixtape.theme.pattern;
@@ -489,30 +427,9 @@ export default function MixtapeLibraryScreen() {
         </View>
       )}
 
-<<<<<<< HEAD
-      {/* Note Preview */}
-      {mixtape.note && (
-        <Text style={styles.notePreview} numberOfLines={2}>
-          &quot;{mixtape.note}&quot;
-        </Text>
-      )}
-
       {/* Actions */}
       <View style={styles.cardActions}>
         <Button
-          title="▶ Play"
-          variant="primary"
-          size="small"
-          onPress={() => router.push(`/player?id=${mixtape.id}`)}
-          style={styles.actionButton}
-        />
-        
-        <Button
-=======
-      {/* Actions */}
-      <View style={styles.cardActions}>
-        <Button
->>>>>>> 0e52c74 (animations)
           title="📤 Share"
           variant="secondary"
           size="small"
@@ -604,8 +521,6 @@ export default function MixtapeLibraryScreen() {
         style={styles.scrollContainer}
       />
 
-<<<<<<< HEAD
-=======
       {/* Play Button - Central */}
       <TouchableOpacity
         style={[
@@ -618,7 +533,6 @@ export default function MixtapeLibraryScreen() {
         <Text style={styles.playFabText}>▶</Text>
       </TouchableOpacity>
 
->>>>>>> 0e52c74 (animations)
       {/* Import Button */}
       <TouchableOpacity
         style={styles.importFab}
@@ -728,23 +642,6 @@ export default function MixtapeLibraryScreen() {
         </View>
       </Modal>
 
-<<<<<<< HEAD
-      {/* Envelope Intro Animation Modal - Requirements: 13.3, 13.4, 13.5 */}
-      <Modal
-        visible={showEnvelopeIntro}
-        transparent={false}
-        animationType="fade"
-        onRequestClose={handleEnvelopeIntroComplete}
-        accessible={true}
-        accessibilityViewIsModal={true}
-      >
-        {importedMixtape && (
-          <EnvelopeIntro
-            envelope={importedMixtape.envelope}
-            note={importedMixtape.note}
-            onComplete={handleEnvelopeIntroComplete}
-          />
-=======
       {/* Envelope Opening Animation Modal - For imported mixtapes */}
       <Modal
         visible={showEnvelopeAnimation}
@@ -767,7 +664,6 @@ export default function MixtapeLibraryScreen() {
           <View style={{ flex: 1, backgroundColor: '#0a0a0a', justifyContent: 'center', alignItems: 'center' }}>
             <Text style={{ color: '#ffffff', fontSize: 18 }}>Loading animation...</Text>
           </View>
->>>>>>> 0e52c74 (animations)
         )}
       </Modal>
     </View>
@@ -927,8 +823,6 @@ const styles = StyleSheet.create({
   actionButton: {
     flex: 1,
   },
-<<<<<<< HEAD
-=======
   playFab: {
     position: 'absolute',
     left: '50%',
@@ -975,7 +869,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 4,
   },
->>>>>>> 0e52c74 (animations)
   importFab: {
     position: 'absolute',
     right: 20,

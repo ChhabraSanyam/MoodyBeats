@@ -49,8 +49,3 @@ coverage/
 *.log
 *.lock
 !package-lock.json
-<<<<<<< HEAD
-=======
-
-.vscode
->>>>>>> 0e52c74 (animations)

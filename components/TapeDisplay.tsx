@@ -19,10 +19,7 @@ interface TapeDisplayProps {
   duration: number;
   currentSide: 'A' | 'B';
   speed?: number;
-<<<<<<< HEAD
-=======
   title?: string;
->>>>>>> 0e52c74 (animations)
 }
 
 const TapeDisplay: React.FC<TapeDisplayProps> = ({
@@ -32,23 +29,6 @@ const TapeDisplay: React.FC<TapeDisplayProps> = ({
   duration,
   currentSide,
   speed = 1.0,
-<<<<<<< HEAD
-}) => {
-  // Memoize theme colors
-  const colors = useMemo(() => {
-    const baseColors = theme.colors || {
-      shell: '#2a2a2a',
-      label: '#ffffff',
-      window: '#1a1a1a',
-    };
-
-    // Apply preset-specific colors if needed
-    switch (theme.preset) {
-      case 'vhs-static-grey':
-        return {
-          ...baseColors,
-          shell: baseColors.shell || '#808080',
-=======
   title,
 }) => {
   // Memoize theme colors based on preset and pattern
@@ -63,42 +43,24 @@ const TapeDisplay: React.FC<TapeDisplayProps> = ({
           shell: shellColor,
           label: '#ffffff',
           window: '#1a1a1a',
->>>>>>> 0e52c74 (animations)
           accent: '#a0a0a0',
         };
       case 'pumpkin-orange':
         return {
-<<<<<<< HEAD
-          ...baseColors,
-          shell: baseColors.shell || '#ff8c00',
-=======
           shell: shellColor,
           label: '#ffffff',
           window: '#1a1a1a',
->>>>>>> 0e52c74 (animations)
           accent: '#ffa500',
         };
       case 'ghostly-green':
         return {
-<<<<<<< HEAD
-          ...baseColors,
-          shell: baseColors.shell || '#00ff00',
-=======
           shell: shellColor,
           label: '#ffffff',
           window: '#1a1a1a',
->>>>>>> 0e52c74 (animations)
           accent: '#00ff88',
         };
       default:
         return {
-<<<<<<< HEAD
-          ...baseColors,
-          accent: '#808080',
-        };
-    }
-  }, [theme]);
-=======
           shell: shellColor,
           label: '#ffffff',
           window: '#1a1a1a',
@@ -106,7 +68,6 @@ const TapeDisplay: React.FC<TapeDisplayProps> = ({
         };
     }
   }, [theme.preset, theme.pattern]);
->>>>>>> 0e52c74 (animations)
 
   const monospaceFont = useMemo(() => getMonospaceFont(), []);
   const platformShadow = useMemo(() => getPlatformShadow(8), []);
@@ -126,11 +87,7 @@ const TapeDisplay: React.FC<TapeDisplayProps> = ({
         {/* Label Area */}
         <View style={styles.labelArea}>
           <View style={[styles.label, { backgroundColor: colors.label }]}>
-<<<<<<< HEAD
-            {theme.customLabel && (
-=======
             {title && (
->>>>>>> 0e52c74 (animations)
               <Text
                 style={[
                   styles.labelText,
@@ -138,11 +95,7 @@ const TapeDisplay: React.FC<TapeDisplayProps> = ({
                 ]}
                 numberOfLines={1}
               >
-<<<<<<< HEAD
-                {theme.customLabel}
-=======
                 {title}
->>>>>>> 0e52c74 (animations)
               </Text>
             )}
           </View>

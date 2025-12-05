@@ -53,10 +53,7 @@ export interface MixtapeMetadata {
     envelope: {
       color: string;
       sigil?: string;
-<<<<<<< HEAD
-=======
       signature?: string;
->>>>>>> 0e52c74 (animations)
     };
   };
 }
@@ -336,12 +333,8 @@ export class ArchiveManager {
         },
         envelope: {
           color: mixtape.envelope.color,
-<<<<<<< HEAD
-          sigil: mixtape.envelope.sigil
-=======
           sigil: mixtape.envelope.sigil,
           signature: mixtape.envelope.signature
->>>>>>> 0e52c74 (animations)
         }
       }
     };
@@ -574,11 +567,6 @@ export class ArchiveManager {
       const audioRepo = createAudioRepository();
       const themeRepo = createThemeRepository();
 
-<<<<<<< HEAD
-      // Convert metadata to Mixtape object
-      const mixtape: Mixtape = {
-        id: archiveData.metadata.mixtape.id,
-=======
       // Create a unique fingerprint for this mixtape based on its content
       // This allows same songs in different mixtapes but prevents duplicate imports
       const mixtapeFingerprint = this.createMixtapeFingerprint(archiveData.metadata.mixtape);
@@ -607,7 +595,6 @@ export class ArchiveManager {
       // Convert metadata to Mixtape object with new ID
       const mixtape: Mixtape = {
         id: newMixtapeId,
->>>>>>> 0e52c74 (animations)
         title: archiveData.metadata.mixtape.title,
         note: archiveData.metadata.mixtape.note,
         sideA: archiveData.metadata.mixtape.sideA,
@@ -618,15 +605,6 @@ export class ArchiveManager {
         updatedAt: new Date()
       };
 
-<<<<<<< HEAD
-      // Check if mixtape already exists
-      const exists = await mixtapeRepo.exists(mixtape.id);
-      if (exists) {
-        throw new Error(`Mixtape with ID ${mixtape.id} already exists in library`);
-      }
-
-=======
->>>>>>> 0e52c74 (animations)
       // Save audio files from archive and build a map of track IDs to saved URIs
       const savedAudioFiles = new Map<string, string>();
       
@@ -750,8 +728,6 @@ export class ArchiveManager {
       reader.readAsArrayBuffer(blob);
     });
   }
-<<<<<<< HEAD
-=======
 
   /**
    * Create a unique fingerprint for a mixtape based on its content
@@ -794,5 +770,4 @@ export class ArchiveManager {
     }
     return hash.toString(36);
   }
->>>>>>> 0e52c74 (animations)
 }

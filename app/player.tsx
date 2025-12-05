@@ -1,21 +1,4 @@
 /**
-<<<<<<< HEAD
- * Mixtape Player Screen
- * Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 7.1, 7.2, 7.3, 7.4, 7.5
- * 
- * Main playback interface featuring:
- * - Tape deck visualization with reel animations
- * - Playback controls (play, pause, FF, REW, flip)
- * - Overheat mechanic
- * - Glitch mode effects
- * - Side A/B navigation
- */
-
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
-import {
-    ActivityIndicator,
-=======
  * Mixtape Player Screen with Integrated Tape Selection
  * Features tape carousel, drag interaction, and insertion animation
  */
@@ -23,51 +6,37 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-    ActivityIndicator,
-    Animated,
-    PanResponder,
->>>>>>> 0e52c74 (animations)
-    Platform,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  ActivityIndicator,
+  Animated,
+  PanResponder,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 import Svg, { Circle, Polygon, Rect } from 'react-native-svg';
-<<<<<<< HEAD
-import { useToast } from '../components';
-=======
 import { Button, useToast } from '../components';
 import TapeCarousel3D from '../components/TapeCarousel3D';
 import TapeStatic2D from '../components/TapeStatic2D';
->>>>>>> 0e52c74 (animations)
 import { Mixtape } from '../models';
 import { PlaybackState } from '../models/PlaybackState';
 import { createMixtapeRepository } from '../repositories/adapters/StorageFactory';
 import { PlaybackEngine } from '../services/PlaybackEngine';
 import {
-    triggerErrorHaptic,
-    triggerLightHaptic,
-    triggerMediumHaptic,
+  triggerErrorHaptic,
+  triggerLightHaptic,
+  triggerMediumHaptic,
 } from '../utils/haptics';
 
-<<<<<<< HEAD
-=======
 type PlayerMode = 'selection' | 'dragging' | 'inserted' | 'playing';
 
->>>>>>> 0e52c74 (animations)
 export default function PlayerScreen() {
   const params = useLocalSearchParams();
   const router = useRouter();
   const { showToast } = useToast();
   const mixtapeId = params.id as string;
 
-<<<<<<< HEAD
-  const [mixtape, setMixtape] = useState<Mixtape | null>(null);
-  const [playbackState, setPlaybackState] = useState<PlaybackState | null>(null);
-  const [playbackEngine] = useState(() => new PlaybackEngine());
-  const [isLoading, setIsLoading] = useState(true);
-=======
   // State management
   const [mixtapes, setMixtapes] = useState<Mixtape[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -92,7 +61,6 @@ export default function PlayerScreen() {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStartY, setDragStartY] = useState(0);
   const [initialTapeY, setInitialTapeY] = useState(-200);
->>>>>>> 0e52c74 (animations)
 
   const mixtapeRepo = createMixtapeRepository();
 
@@ -108,12 +76,6 @@ export default function PlayerScreen() {
   };
 
   /**
-<<<<<<< HEAD
-   * Load mixtape and initialize playback
-   */
-  useEffect(() => {
-    loadMixtape();
-=======
    * Load mixtapes for selection or specific mixtape
    */
   useEffect(() => {
@@ -122,7 +84,6 @@ export default function PlayerScreen() {
     } else {
       loadAllMixtapes();
     }
->>>>>>> 0e52c74 (animations)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mixtapeId]);
 
@@ -155,16 +116,6 @@ export default function PlayerScreen() {
     };
   }, [playbackEngine]);
 
-<<<<<<< HEAD
-  const loadMixtape = async () => {
-    if (!mixtapeId) {
-      await triggerErrorHaptic();
-      showToast('No mixtape ID provided', 'error');
-      navigateBack();
-      return;
-    }
-
-=======
   const loadAllMixtapes = async () => {
     try {
       const allMixtapes = await mixtapeRepo.getAll();
@@ -187,7 +138,6 @@ export default function PlayerScreen() {
   };
 
   const loadSpecificMixtape = async () => {
->>>>>>> 0e52c74 (animations)
     try {
       const loadedMixtape = await mixtapeRepo.getById(mixtapeId);
       if (!loadedMixtape) {
@@ -197,14 +147,9 @@ export default function PlayerScreen() {
         return;
       }
 
-<<<<<<< HEAD
-      setMixtape(loadedMixtape);
-
-=======
       setSelectedMixtape(loadedMixtape);
       setMode('inserted');
       
->>>>>>> 0e52c74 (animations)
       // Load mixtape into playback engine
       await playbackEngine.load(loadedMixtape);
       setPlaybackState(playbackEngine.getCurrentState());
@@ -218,8 +163,6 @@ export default function PlayerScreen() {
   };
 
   /**
-<<<<<<< HEAD
-=======
    * Carousel navigation handlers
    */
   const handlePrevious = () => {
@@ -448,7 +391,6 @@ export default function PlayerScreen() {
   }, [isDragging, mode, dragStartY, initialTapeY]);
 
   /**
->>>>>>> 0e52c74 (animations)
    * Playback control handlers
    */
   const handlePlay = async () => {
@@ -524,9 +466,6 @@ export default function PlayerScreen() {
     }
   };
 
-<<<<<<< HEAD
-  if (isLoading || !mixtape || !playbackState) {
-=======
   const handleTapeFlip = async () => {
     if (isAnimating) return;
     
@@ -627,14 +566,10 @@ export default function PlayerScreen() {
   };
 
   if (isLoading) {
->>>>>>> 0e52c74 (animations)
     return (
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#4a9eff" />
-<<<<<<< HEAD
-          <Text style={styles.loadingText}>Loading mixtape...</Text>
-=======
           <Text style={styles.loadingText}>Loading mixtapes...</Text>
         </View>
       </View>
@@ -646,7 +581,6 @@ export default function PlayerScreen() {
       <View style={styles.container}>
         <View style={styles.loadingContainer}>
           <Text style={styles.loadingText}>No mixtapes available</Text>
->>>>>>> 0e52c74 (animations)
         </View>
       </View>
     );
@@ -660,11 +594,7 @@ export default function PlayerScreen() {
           style={styles.backButton}
           onPress={async () => {
             await triggerLightHaptic();
-<<<<<<< HEAD
-            navigateBack();
-=======
             router.push('/library');
->>>>>>> 0e52c74 (animations)
           }}
           accessibilityLabel="Go back"
           accessibilityRole="button"
@@ -672,149 +602,6 @@ export default function PlayerScreen() {
           <Text style={styles.backButtonText}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle} accessibilityRole="header">
-<<<<<<< HEAD
-          PLAYER MODE
-        </Text>
-        <TouchableOpacity
-          style={styles.menuButton}
-          onPress={async () => {
-            await triggerLightHaptic();
-          }}
-          accessibilityLabel="Menu"
-          accessibilityRole="button"
-        >
-          <Text style={styles.menuButtonText}>⋮</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Main Content - Centered Player */}
-      <View style={styles.mainContent}>
-        {/* Navigation Arrows and Title */}
-        <View style={styles.navigationSection}>
-          <TouchableOpacity style={styles.navArrow}>
-            <Text style={styles.navArrowText}>‹</Text>
-          </TouchableOpacity>
-          <Text style={styles.mixtapeTitle}>{mixtape.title}</Text>
-          <TouchableOpacity style={styles.navArrow}>
-            <Text style={styles.navArrowText}>›</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Player Shell */}
-        <View style={styles.playerShell}>
-          {/* Top Label/Button Area */}
-          <View style={styles.topLabelArea}>
-            <View style={styles.topLabel} />
-            {playbackState.isPlaying &&
-              !playbackState.isRewinding &&
-              !playbackState.isFastForwarding &&
-              Platform.OS === 'android' && (
-                <View style={styles.recordIndicatorGlowWrapper}>
-                  <View style={styles.recordIndicatorGlowOuter} />
-                </View>
-              )}
-            <View
-              style={[
-                styles.recordIndicator,
-                playbackState.isPlaying &&
-                  !playbackState.isRewinding &&
-                  !playbackState.isFastForwarding &&
-                  styles.recordIndicatorGlow,
-              ]}
-            />
-          </View>
-
-          {/* Deck Area with Reels */}
-          <View style={styles.deckArea}>
-            <View style={styles.reelsSection}>
-              <View style={styles.playerReel}>
-                <View style={styles.playerReelInner} />
-              </View>
-              <View style={styles.playerTape} />
-              <View style={styles.playerReel}>
-                <View style={styles.playerReelInner} />
-              </View>
-            </View>
-            {/* Glass Effect Overlay */}
-            <View style={styles.glassOverlay} />
-          </View>
-
-          {/* Bottom Control Area */}
-          <View style={styles.bottomControlArea}>
-            {/* Control Buttons */}
-            <View style={styles.controlButtons}>
-              {/* Rewind Button */}
-              <TouchableOpacity
-                style={styles.controlBtn}
-                onPressIn={handleRewindPress}
-                onPressOut={handleRewindRelease}
-                disabled={playbackState.isOverheated}
-                activeOpacity={0.7}
-                delayPressIn={0}
-              >
-                <Svg width="40" height="40" viewBox="0 0 24 24">
-                  <Circle cx="12" cy="12" r="10" fill="#4E9E9A" />
-                  <Polygon points="14.5,7 10.5,12 14.5,17" fill="white" />
-                  <Polygon points="10.5,7 6.5,12 10.5,17" fill="white" />
-                </Svg>
-              </TouchableOpacity>
-
-              {/* Play/Pause Button */}
-              <TouchableOpacity
-                style={[styles.controlBtn, styles.mainControlBtn]}
-                onPress={
-                  playbackState.isPlaying &&
-                  !playbackState.isRewinding &&
-                  !playbackState.isFastForwarding
-                    ? handlePause
-                    : handlePlay
-                }
-                disabled={
-                  playbackState.isRewinding || playbackState.isFastForwarding
-                }
-              >
-                {playbackState.isPlaying &&
-                !playbackState.isRewinding &&
-                !playbackState.isFastForwarding ? (
-                  <Svg width="28" height="28" viewBox="0 0 24 24">
-                    <Rect x="6" y="4" width="4" height="16" fill="#000000" />
-                    <Rect x="14" y="4" width="4" height="16" fill="#000000" />
-                  </Svg>
-                ) : (
-                  <Svg width="28" height="28" viewBox="0 0 24 24">
-                    <Polygon points="8,5 8,19 19,12" fill="#000000" />
-                  </Svg>
-                )}
-              </TouchableOpacity>
-
-              {/* Fast Forward Button */}
-              <TouchableOpacity
-                style={styles.controlBtn}
-                onPressIn={handleFastForwardPress}
-                onPressOut={handleFastForwardRelease}
-                disabled={playbackState.isOverheated}
-                activeOpacity={0.7}
-                delayPressIn={0}
-              >
-                <Svg width="40" height="40" viewBox="0 0 24 24">
-                  <Circle cx="12" cy="12" r="10" fill="#4E9E9A" />
-                  <Polygon points="9.5,7 13.5,12 9.5,17" fill="white" />
-                  <Polygon points="13.5,7 17.5,12 13.5,17" fill="white" />
-                </Svg>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </View>
-
-      {/* Status Info */}
-      {playbackState.isOverheated && (
-        <Text style={styles.statusText}>🔥 Cooling down...</Text>
-      )}
-      {playbackState.glitchMode && (
-        <Text style={styles.statusText}>👻 Glitch Mode</Text>
-      )}
-=======
           {mode === 'selection' ? 'SELECT A MIXTAPE' : 'PLAYER MODE'}
         </Text>
         <View style={styles.menuButton} />
@@ -1122,7 +909,6 @@ export default function PlayerScreen() {
       )}
 
 
->>>>>>> 0e52c74 (animations)
     </View>
   );
 }
@@ -1130,11 +916,7 @@ export default function PlayerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-<<<<<<< HEAD
-    backgroundColor: '#000000',
-=======
     backgroundColor: '#1a1a1a',
->>>>>>> 0e52c74 (animations)
   },
   header: {
     flexDirection: 'row',
@@ -1152,11 +934,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 32,
-<<<<<<< HEAD
-    color: '#c084fc',
-=======
     color: '#B28EF1',
->>>>>>> 0e52c74 (animations)
     fontWeight: '300',
   },
   menuButton: {
@@ -1165,22 +943,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'flex-end',
   },
-<<<<<<< HEAD
-  menuButtonText: {
-    fontSize: 32,
-    color: '#c084fc',
-    fontWeight: '600',
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontFamily: 'Staatliches',
-    color: '#c084fc',
-=======
   headerTitle: {
     fontSize: 16,
     fontFamily: 'Staatliches',
     color: '#B28EF1',
->>>>>>> 0e52c74 (animations)
     textTransform: 'uppercase',
     letterSpacing: 1.5,
   },
@@ -1200,8 +966,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
   },
-<<<<<<< HEAD
-=======
   // Tape Selection Styles
   selectionTitle: {
     fontSize: 32,
@@ -1289,7 +1053,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     fontStyle: 'italic',
   },
->>>>>>> 0e52c74 (animations)
   navigationSection: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1320,10 +1083,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#b794f6',
     borderRadius: 24,
     padding: 20,
-<<<<<<< HEAD
-=======
     alignSelf: 'center',
->>>>>>> 0e52c74 (animations)
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -1334,12 +1094,9 @@ const styles = StyleSheet.create({
       android: {
         elevation: 12,
       },
-<<<<<<< HEAD
-=======
       web: {
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
       },
->>>>>>> 0e52c74 (animations)
     }),
   },
   topLabelArea: {
@@ -1347,16 +1104,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
-<<<<<<< HEAD
-  },
-  topLabel: {
-    flex: 1,
-    height: 50,
-    backgroundColor: '#4E9E9A',
-    borderRadius: 25,
-    marginRight: 12,
-    borderWidth: 5,
-=======
     gap: 8,
   },
   topEjectButton: {
@@ -1426,7 +1173,6 @@ const styles = StyleSheet.create({
     borderRadius: 17.5,
     marginRight: 12,
     borderWidth: 3, // Made thinner
->>>>>>> 0e52c74 (animations)
     borderColor: '#800080',
   },
   recordIndicator: {
@@ -1582,8 +1328,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: 'bold',
   },
-<<<<<<< HEAD
-=======
   backToSelectContainer: {
     position: 'absolute',
     bottom: 20,
@@ -1621,7 +1365,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
->>>>>>> 0e52c74 (animations)
   statusText: {
     fontSize: 14,
     color: '#888888',

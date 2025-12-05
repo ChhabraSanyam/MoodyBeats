@@ -1,13 +1,4 @@
 import { useRouter } from "expo-router";
-<<<<<<< HEAD
-import { StyleSheet, Text, View } from "react-native";
-import { Button } from "../components";
-import { triggerLightHaptic } from "../utils/haptics";
-
-export default function Index() {
-  const router = useRouter();
-
-=======
 import { useEffect } from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
 import { useFonts } from 'expo-font';
@@ -59,7 +50,6 @@ export default function Index() {
     return null;
   }
 
->>>>>>> 0e52c74 (animations)
   const handleCreateMixtape = async () => {
     await triggerLightHaptic();
     router.push('/maker');
@@ -117,11 +107,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 48,
-<<<<<<< HEAD
-    fontFamily: 'Staatliches',
-=======
     fontFamily: Platform.OS === 'web' ? 'Staatliches' : 'Staatliches',
->>>>>>> 0e52c74 (animations)
     color: '#ffffff',
     marginBottom: 8,
   },

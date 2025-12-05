@@ -2,10 +2,7 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-<<<<<<< HEAD
-=======
     "jsx": "react-native",
->>>>>>> 0e52c74 (animations)
     "paths": {
       "@/*": [
         "./*"
