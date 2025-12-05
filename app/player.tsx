@@ -551,7 +551,7 @@ const styles = StyleSheet.create({
     ...Platform.select({
       web: {
         backdropFilter: 'blur(2px)',
-        background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 50%, rgba(255, 255, 255, 0.08) 100%)',
+        backgroundImage: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 50%, rgba(255, 255, 255, 0.08) 100%)',
       },
       ios: {
         backgroundColor: 'rgba(255, 255, 255, 0.08)',

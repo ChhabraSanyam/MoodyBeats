@@ -42,9 +42,10 @@ interface HoverableButtonProps {
   textStyle?: TextStyle | TextStyle[];
   children: React.ReactNode;
   glowColor?: string;
+  disabled?: boolean;
 }
 
-function HoverableButton({ onPress, style, textStyle, children, glowColor = '#d4b8ff' }: HoverableButtonProps) {
+function HoverableButton({ onPress, style, textStyle, children, glowColor = '#d4b8ff', disabled = false }: HoverableButtonProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const webStyle = Platform.OS === 'web' && isHovered ? {
@@ -57,6 +58,7 @@ function HoverableButton({ onPress, style, textStyle, children, glowColor = '#d4
   return (
     <TouchableOpacity
       onPress={onPress}
+      disabled={disabled}
       style={[
         style,
         Platform.OS === 'web' && isHovered && {
@@ -149,16 +151,6 @@ export default function MixtapeCreatorScreen() {
     'Staatliches': require('../assets/fonts/Staatliches-Regular.ttf'),
   });
 
-  useEffect(() => {
-    if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync();
-    }
-  }, [fontsLoaded, fontError]);
-
-  if (!fontsLoaded && !fontError) {
-    return null;
-  }
-
   const generateMixtapeId = (): string => {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
       const r = (Math.random() * 16) | 0;
@@ -166,6 +158,12 @@ export default function MixtapeCreatorScreen() {
       return v.toString(16);
     });
   };
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
 
   useEffect(() => {
     const newId = generateMixtapeId();
@@ -494,6 +492,11 @@ export default function MixtapeCreatorScreen() {
   };
 
 
+
+  // Early return for font loading - must be after all hooks
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
 
   return (
     <View style={styles.container}>
