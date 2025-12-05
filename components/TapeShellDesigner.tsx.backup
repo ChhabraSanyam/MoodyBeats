@@ -1,0 +1,965 @@
+/**
+ * Redesigned TapeShellDesigner Component
+ * Modern UI for tape shell customization
+ */
+
+import React, { useState } from 'react';
+import {
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextStyle,
+    TouchableOpacity,
+    View,
+    ViewStyle,
+} from 'react-native';
+import { TapeTheme } from '../models';
+
+// Hoverable Button Component for Web
+interface HoverableButtonProps {
+  onPress: () => void;
+  style?: ViewStyle | ViewStyle[];
+  textStyle?: TextStyle | TextStyle[];
+  children: React.ReactNode;
+  glowColor?: string;
+}
+
+function HoverableButton({ onPress, style, textStyle, children, glowColor = '#d4b8ff' }: HoverableButtonProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  if (Platform.OS !== 'web') {
+    return (
+      <TouchableOpacity onPress={onPress} style={style}>
+        <Text style={textStyle}>{children}</Text>
+      </TouchableOpacity>
+    );
+  }
+
+  const webStyle = isHovered ? {
+    boxShadow: `0 0 10px ${glowColor}, 0 0 15px ${glowColor}`,
+    transition: 'box-shadow 0.3s ease-in-out',
+  } : {
+    transition: 'box-shadow 0.3s ease-in-out',
+  };
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      style={[
+        style,
+        isHovered && {
+          shadowColor: glowColor,
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.5,
+          shadowRadius: 8,
+          elevation: 5,
+        },
+      ]}
+      // @ts-ignore - Web-specific props
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      // @ts-ignore - Web-specific style
+      {...(Platform.OS === 'web' && { style: [style, webStyle] })}
+    >
+      <Text style={textStyle}>{children}</Text>
+    </TouchableOpacity>
+  );
+}
+
+interface TapeShellDesignerProps {
+  theme: TapeTheme;
+  onThemeChange: (theme: TapeTheme) => void;
+  mixtapeTitle?: string;
+  onChangeSongs?: () => void;
+  onSave?: () => void;
+}
+
+// Color options
+const COLOR_OPTIONS = [
+  '#EF4444', // Red
+  '#F97316', // Orange
+  '#EAB308', // Yellow
+  '#22C55E', // Green
+  '#06B6D4', // Cyan
+  '#3B82F6', // Blue
+  '#8B5CF6', // Purple
+  '#EC4899', // Pink/Magenta
+];
+
+// Preset gradient themes
+const PRESET_GRADIENTS = [
+  {
+    id: 'love',
+    name: 'Love',
+    colors: ['#FFFFFF', '#F8F8F8', '#F0F0F0'],
+    preset: 'vhs-static-grey' as const,
+  },
+  {
+    id: 'retro',
+    name: 'Retro',
+    colors: ['#4169E1', '#5B7FD8', '#7495CF'],
+    preset: 'pumpkin-orange' as const,
+  },
+  {
+    id: 'galaxy',
+    name: 'Galaxy',
+    colors: ['#0F1B4C', '#1E1B4B', '#4C1D95', '#7C3AED'],
+    preset: 'ghostly-green' as const,
+  },
+  {
+    id: 'flowers',
+    name: 'Flowers',
+    colors: ['#FCD34D', '#FBBF24', '#F59E0B', '#F97316'],
+    preset: 'vhs-static-grey' as const,
+  },
+];
+
+export default function TapeShellDesigner({ 
+  theme, 
+  onThemeChange, 
+  mixtapeTitle = 'GHOSTLY ECHOES',
+  onChangeSongs,
+  onSave 
+}: TapeShellDesignerProps) {
+  const [selectedColor, setSelectedColor] = useState('#EC4899');
+  const [selectedPreset, setSelectedPreset] = useState<string | null>(null);
+
+  const handleColorSelect = (color: string) => {
+    setSelectedColor(color);
+    // Clear preset selection when a color is selected
+    setSelectedPreset(null);
+    // Update theme with selected color only
+    onThemeChange({
+      preset: theme.preset,
+      pattern: color,
+    });
+  };
+
+  const handlePresetSelect = (presetId: string) => {
+    setSelectedPreset(presetId);
+    const preset = PRESET_GRADIENTS.find(p => p.id === presetId);
+    if (preset) {
+      // Set the shell color - use beige for love theme, first gradient color for others
+      const shellColor = presetId === 'love' ? '#F5F5DC' : preset.colors[0];
+      setSelectedColor(shellColor);
+      onThemeChange({
+        preset: preset.preset,
+        pattern: shellColor,
+      });
+    }
+  };
+
+  return (
+    <View style={styles.container}>
+      <ScrollView style={styles.scrollContainer}>
+        {/* Tape Preview */}
+        <View style={styles.previewSection}>
+          <View style={[
+            styles.tapeShell,
+            { backgroundColor: selectedColor },
+            selectedPreset === 'love' && Platform.OS === 'web' && {
+              backgroundColor: '#F5F5DC',
+              backgroundImage: `
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 300'%3E%3Cg%3E%3C!-- Top left (red) --%3E%3Cpath fill='%238B0000' d='M 60 38 C 60 30 56 26 50 26 C 44 26 40 30 40 38 C 40 30 36 26 30 26 C 24 26 20 30 20 38 C 20 49 40 61 40 61 C 40 61 60 49 60 38 Z'/%3E%3C!-- Top center left (pink) --%3E%3Cpath fill='%23FF69B4' d='M 152 28 C 152 22 149 19 144 19 C 139 19 136 22 136 28 C 136 22 133 19 128 19 C 123 19 120 22 120 28 C 120 37 136 47 136 47 C 136 47 152 37 152 28 Z'/%3E%3C!-- Top center (red) --%3E%3Cpath fill='%238B0000' d='M 252 23 C 252 17 249 14 244 14 C 239 14 236 17 236 23 C 236 17 233 14 228 14 C 223 14 220 17 220 23 C 220 32 236 42 236 42 C 236 42 252 32 252 23 Z'/%3E%3C!-- Top center right (pink) --%3E%3Cpath fill='%23FF69B4' d='M 348 28 C 348 22 345 19 340 19 C 335 19 332 22 332 28 C 332 22 329 19 324 19 C 319 19 316 22 316 28 C 316 37 332 47 332 47 C 332 47 348 37 348 28 Z'/%3E%3C!-- Top right (red) --%3E%3Cpath fill='%238B0000' d='M 460 38 C 460 30 456 26 450 26 C 444 26 440 30 440 38 C 440 30 436 26 430 26 C 424 26 420 30 420 38 C 420 49 440 61 440 61 C 440 61 460 49 460 38 Z'/%3E%3C!-- Left side (pink) --%3E%3Cpath fill='%23FF69B4' d='M 52 148 C 52 141 49 138 44 138 C 39 138 36 141 36 148 C 36 141 33 138 28 138 C 23 138 20 141 20 148 C 20 158 36 168 36 168 C 36 168 52 158 52 148 Z'/%3E%3C!-- Right side (pink) --%3E%3Cpath fill='%23FF69B4' d='M 460 148 C 460 141 457 138 452 138 C 447 138 444 141 444 148 C 444 141 441 138 436 138 C 431 138 428 141 428 148 C 428 158 444 168 444 168 C 444 168 460 158 460 148 Z'/%3E%3C!-- Bottom left (red) --%3E%3Cpath fill='%238B0000' d='M 60 262 C 60 254 56 250 50 250 C 44 250 40 254 40 262 C 40 254 36 250 30 250 C 24 250 20 254 20 262 C 20 273 40 285 40 285 C 40 285 60 273 60 262 Z'/%3E%3C!-- Bottom center left (pink) --%3E%3Cpath fill='%23FF69B4' d='M 152 272 C 152 266 149 263 144 263 C 139 263 136 266 136 272 C 136 266 133 263 128 263 C 123 263 120 266 120 272 C 120 281 136 291 136 291 C 136 291 152 281 152 272 Z'/%3E%3C!-- Bottom center right (pink) --%3E%3Cpath fill='%23FF69B4' d='M 348 272 C 348 266 345 263 340 263 C 335 263 332 266 332 272 C 332 266 329 263 324 263 C 319 263 316 266 316 272 C 316 281 332 291 332 291 C 332 291 348 281 348 272 Z'/%3E%3C!-- Bottom right (red) --%3E%3Cpath fill='%238B0000' d='M 460 262 C 460 254 456 250 450 250 C 444 250 440 254 440 262 C 440 254 436 250 430 250 C 424 250 420 254 420 262 C 420 273 440 285 440 285 C 440 285 460 273 460 262 Z'/%3E%3C/g%3E%3C/svg%3E")
+              `,
+              backgroundSize: '100% 100%',
+              backgroundRepeat: 'no-repeat',
+            },
+            selectedPreset === 'flowers' && Platform.OS === 'web' && {
+              background: `linear-gradient(135deg, #FCD34D 0%, #FBBF24 30%, #F59E0B 70%, #F97316 100%)`,
+              backgroundImage: `
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 300'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23FCD34D'/%3E%3Cstop offset='30%25' style='stop-color:%23FBBF24'/%3E%3Cstop offset='70%25' style='stop-color:%23F59E0B'/%3E%3Cstop offset='100%25' style='stop-color:%23F97316'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='480' height='300' fill='url(%23bg)'/%3E%3Cg%3E%3C!-- Flowers with 5 petals and stems --%3E%3C!-- Top left pink flower --%3E%3Cline x1='30' y1='60' x2='30' y2='35' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='30' cy='20' rx='6' ry='8' fill='%23FF69B4' transform='rotate(0 30 20)'/%3E%3Cellipse cx='30' cy='20' rx='6' ry='8' fill='%23FF69B4' transform='rotate(72 30 20)'/%3E%3Cellipse cx='30' cy='20' rx='6' ry='8' fill='%23FF69B4' transform='rotate(144 30 20)'/%3E%3Cellipse cx='30' cy='20' rx='6' ry='8' fill='%23FF69B4' transform='rotate(216 30 20)'/%3E%3Cellipse cx='30' cy='20' rx='6' ry='8' fill='%23FF69B4' transform='rotate(288 30 20)'/%3E%3Ccircle cx='30' cy='20' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='25' cy='45' rx='8' ry='12' fill='%2322C55E' transform='rotate(30 25 45)'/%3E%3Cellipse cx='35' cy='48' rx='8' ry='12' fill='%2322C55E' transform='rotate(-20 35 48)'/%3E%3C!-- Top center left purple flower --%3E%3Cline x1='120' y1='70' x2='120' y2='45' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='120' cy='30' rx='6' ry='8' fill='%238B5CF6' transform='rotate(0 120 30)'/%3E%3Cellipse cx='120' cy='30' rx='6' ry='8' fill='%238B5CF6' transform='rotate(72 120 30)'/%3E%3Cellipse cx='120' cy='30' rx='6' ry='8' fill='%238B5CF6' transform='rotate(144 120 30)'/%3E%3Cellipse cx='120' cy='30' rx='6' ry='8' fill='%238B5CF6' transform='rotate(216 120 30)'/%3E%3Cellipse cx='120' cy='30' rx='6' ry='8' fill='%238B5CF6' transform='rotate(288 120 30)'/%3E%3Ccircle cx='120' cy='30' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='115' cy='55' rx='8' ry='12' fill='%2322C55E' transform='rotate(25 115 55)'/%3E%3C!-- Top center pink flower --%3E%3Cline x1='240' y1='70' x2='240' y2='45' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='240' cy='30' rx='7' ry='9' fill='%23EC4899' transform='rotate(0 240 30)'/%3E%3Cellipse cx='240' cy='30' rx='7' ry='9' fill='%23EC4899' transform='rotate(72 240 30)'/%3E%3Cellipse cx='240' cy='30' rx='7' ry='9' fill='%23EC4899' transform='rotate(144 240 30)'/%3E%3Cellipse cx='240' cy='30' rx='7' ry='9' fill='%23EC4899' transform='rotate(216 240 30)'/%3E%3Cellipse cx='240' cy='30' rx='7' ry='9' fill='%23EC4899' transform='rotate(288 240 30)'/%3E%3Ccircle cx='240' cy='30' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='235' cy='55' rx='8' ry='12' fill='%2322C55E' transform='rotate(25 235 55)'/%3E%3Cellipse cx='245' cy='58' rx='8' ry='12' fill='%2322C55E' transform='rotate(-15 245 58)'/%3E%3C!-- Top center right red flower --%3E%3Cline x1='360' y1='70' x2='360' y2='45' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='360' cy='30' rx='6' ry='8' fill='%23EF4444' transform='rotate(0 360 30)'/%3E%3Cellipse cx='360' cy='30' rx='6' ry='8' fill='%23EF4444' transform='rotate(72 360 30)'/%3E%3Cellipse cx='360' cy='30' rx='6' ry='8' fill='%23EF4444' transform='rotate(144 360 30)'/%3E%3Cellipse cx='360' cy='30' rx='6' ry='8' fill='%23EF4444' transform='rotate(216 360 30)'/%3E%3Cellipse cx='360' cy='30' rx='6' ry='8' fill='%23EF4444' transform='rotate(288 360 30)'/%3E%3Ccircle cx='360' cy='30' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='365' cy='55' rx='8' ry='12' fill='%2322C55E' transform='rotate(-25 365 55)'/%3E%3C!-- Top right purple flower --%3E%3Cline x1='450' y1='60' x2='450' y2='35' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='450' cy='20' rx='7' ry='9' fill='%238B5CF6' transform='rotate(0 450 20)'/%3E%3Cellipse cx='450' cy='20' rx='7' ry='9' fill='%238B5CF6' transform='rotate(72 450 20)'/%3E%3Cellipse cx='450' cy='20' rx='7' ry='9' fill='%238B5CF6' transform='rotate(144 450 20)'/%3E%3Cellipse cx='450' cy='20' rx='7' ry='9' fill='%238B5CF6' transform='rotate(216 450 20)'/%3E%3Cellipse cx='450' cy='20' rx='7' ry='9' fill='%238B5CF6' transform='rotate(288 450 20)'/%3E%3Ccircle cx='450' cy='20' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='445' cy='45' rx='8' ry='12' fill='%2322C55E' transform='rotate(-30 445 45)'/%3E%3Cellipse cx='455' cy='48' rx='8' ry='12' fill='%2322C55E' transform='rotate(20 455 48)'/%3E%3C!-- Middle left pink flower --%3E%3Cline x1='60' y1='130' x2='60' y2='155' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='60' cy='170' rx='6' ry='8' fill='%23FF69B4' transform='rotate(0 60 170)'/%3E%3Cellipse cx='60' cy='170' rx='6' ry='8' fill='%23FF69B4' transform='rotate(72 60 170)'/%3E%3Cellipse cx='60' cy='170' rx='6' ry='8' fill='%23FF69B4' transform='rotate(144 60 170)'/%3E%3Cellipse cx='60' cy='170' rx='6' ry='8' fill='%23FF69B4' transform='rotate(216 60 170)'/%3E%3Cellipse cx='60' cy='170' rx='6' ry='8' fill='%23FF69B4' transform='rotate(288 60 170)'/%3E%3Ccircle cx='60' cy='170' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='55' cy='145' rx='8' ry='12' fill='%2322C55E' transform='rotate(20 55 145)'/%3E%3C!-- Middle right orange flower --%3E%3Cline x1='420' y1='130' x2='420' y2='155' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='420' cy='170' rx='6' ry='8' fill='%23F97316' transform='rotate(0 420 170)'/%3E%3Cellipse cx='420' cy='170' rx='6' ry='8' fill='%23F97316' transform='rotate(72 420 170)'/%3E%3Cellipse cx='420' cy='170' rx='6' ry='8' fill='%23F97316' transform='rotate(144 420 170)'/%3E%3Cellipse cx='420' cy='170' rx='6' ry='8' fill='%23F97316' transform='rotate(216 420 170)'/%3E%3Cellipse cx='420' cy='170' rx='6' ry='8' fill='%23F97316' transform='rotate(288 420 170)'/%3E%3Ccircle cx='420' cy='170' r='3' fill='%23FCD34D'/%3E%3Cellipse cx='425' cy='145' rx='8' ry='12' fill='%2322C55E' transform='rotate(-20 425 145)'/%3E%3C!-- Bottom left red flower --%3E%3Cellipse cx='45' cy='255' rx='8' ry='12' fill='%2322C55E' transform='rotate(-30 45 255)'/%3E%3Cellipse cx='55' cy='252' rx='8' ry='12' fill='%2322C55E' transform='rotate(20 55 252)'/%3E%3Cline x1='50' y1='240' x2='50' y2='265' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='50' cy='280' rx='6' ry='8' fill='%23EF4444' transform='rotate(0 50 280)'/%3E%3Cellipse cx='50' cy='280' rx='6' ry='8' fill='%23EF4444' transform='rotate(72 50 280)'/%3E%3Cellipse cx='50' cy='280' rx='6' ry='8' fill='%23EF4444' transform='rotate(144 50 280)'/%3E%3Cellipse cx='50' cy='280' rx='6' ry='8' fill='%23EF4444' transform='rotate(216 50 280)'/%3E%3Cellipse cx='50' cy='280' rx='6' ry='8' fill='%23EF4444' transform='rotate(288 50 280)'/%3E%3Ccircle cx='50' cy='280' r='3' fill='%23FCD34D'/%3E%3C!-- Bottom center left purple flower --%3E%3Cellipse cx='145' cy='245' rx='8' ry='12' fill='%2322C55E' transform='rotate(-25 145 245)'/%3E%3Cline x1='150' y1='230' x2='150' y2='255' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='150' cy='270' rx='6' ry='8' fill='%238B5CF6' transform='rotate(0 150 270)'/%3E%3Cellipse cx='150' cy='270' rx='6' ry='8' fill='%238B5CF6' transform='rotate(72 150 270)'/%3E%3Cellipse cx='150' cy='270' rx='6' ry='8' fill='%238B5CF6' transform='rotate(144 150 270)'/%3E%3Cellipse cx='150' cy='270' rx='6' ry='8' fill='%238B5CF6' transform='rotate(216 150 270)'/%3E%3Cellipse cx='150' cy='270' rx='6' ry='8' fill='%238B5CF6' transform='rotate(288 150 270)'/%3E%3Ccircle cx='150' cy='270' r='3' fill='%23FCD34D'/%3E%3C!-- Bottom center pink flower --%3E%3Cellipse cx='235' cy='245' rx='8' ry='12' fill='%2322C55E' transform='rotate(-25 235 245)'/%3E%3Cellipse cx='245' cy='242' rx='8' ry='12' fill='%2322C55E' transform='rotate(15 245 242)'/%3E%3Cline x1='240' y1='230' x2='240' y2='255' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='240' cy='270' rx='6' ry='8' fill='%23EC4899' transform='rotate(0 240 270)'/%3E%3Cellipse cx='240' cy='270' rx='6' ry='8' fill='%23EC4899' transform='rotate(72 240 270)'/%3E%3Cellipse cx='240' cy='270' rx='6' ry='8' fill='%23EC4899' transform='rotate(144 240 270)'/%3E%3Cellipse cx='240' cy='270' rx='6' ry='8' fill='%23EC4899' transform='rotate(216 240 270)'/%3E%3Cellipse cx='240' cy='270' rx='6' ry='8' fill='%23EC4899' transform='rotate(288 240 270)'/%3E%3Ccircle cx='240' cy='270' r='3' fill='%23FCD34D'/%3E%3C!-- Bottom center right pink flower --%3E%3Cellipse cx='335' cy='245' rx='8' ry='12' fill='%2322C55E' transform='rotate(25 335 245)'/%3E%3Cline x1='330' y1='230' x2='330' y2='255' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='330' cy='270' rx='6' ry='8' fill='%23FF69B4' transform='rotate(0 330 270)'/%3E%3Cellipse cx='330' cy='270' rx='6' ry='8' fill='%23FF69B4' transform='rotate(72 330 270)'/%3E%3Cellipse cx='330' cy='270' rx='6' ry='8' fill='%23FF69B4' transform='rotate(144 330 270)'/%3E%3Cellipse cx='330' cy='270' rx='6' ry='8' fill='%23FF69B4' transform='rotate(216 330 270)'/%3E%3Cellipse cx='330' cy='270' rx='6' ry='8' fill='%23FF69B4' transform='rotate(288 330 270)'/%3E%3Ccircle cx='330' cy='270' r='3' fill='%23FCD34D'/%3E%3C!-- Bottom right orange flower --%3E%3Cellipse cx='425' cy='255' rx='8' ry='12' fill='%2322C55E' transform='rotate(30 425 255)'/%3E%3Cellipse cx='435' cy='252' rx='8' ry='12' fill='%2322C55E' transform='rotate(-20 435 252)'/%3E%3Cline x1='430' y1='240' x2='430' y2='265' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='430' cy='280' rx='6' ry='8' fill='%23F97316' transform='rotate(0 430 280)'/%3E%3Cellipse cx='430' cy='280' rx='6' ry='8' fill='%23F97316' transform='rotate(72 430 280)'/%3E%3Cellipse cx='430' cy='280' rx='6' ry='8' fill='%23F97316' transform='rotate(144 430 280)'/%3E%3Cellipse cx='430' cy='280' rx='6' ry='8' fill='%23F97316' transform='rotate(216 430 280)'/%3E%3Cellipse cx='430' cy='280' rx='6' ry='8' fill='%23F97316' transform='rotate(288 430 280)'/%3E%3Ccircle cx='430' cy='280' r='3' fill='%23FCD34D'/%3E%3C!-- Left side upper purple flower --%3E%3Cline x1='25' y1='80' x2='25' y2='100' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='25' cy='115' rx='5' ry='7' fill='%238B5CF6' transform='rotate(0 25 115)'/%3E%3Cellipse cx='25' cy='115' rx='5' ry='7' fill='%238B5CF6' transform='rotate(72 25 115)'/%3E%3Cellipse cx='25' cy='115' rx='5' ry='7' fill='%238B5CF6' transform='rotate(144 25 115)'/%3E%3Cellipse cx='25' cy='115' rx='5' ry='7' fill='%238B5CF6' transform='rotate(216 25 115)'/%3E%3Cellipse cx='25' cy='115' rx='5' ry='7' fill='%238B5CF6' transform='rotate(288 25 115)'/%3E%3Ccircle cx='25' cy='115' r='2' fill='%23FCD34D'/%3E%3Cellipse cx='20' cy='92' rx='7' ry='10' fill='%2322C55E' transform='rotate(25 20 92)'/%3E%3C!-- Left side lower red flower --%3E%3Cline x1='30' y1='200' x2='30' y2='220' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='30' cy='235' rx='5' ry='7' fill='%23EF4444' transform='rotate(0 30 235)'/%3E%3Cellipse cx='30' cy='235' rx='5' ry='7' fill='%23EF4444' transform='rotate(72 30 235)'/%3E%3Cellipse cx='30' cy='235' rx='5' ry='7' fill='%23EF4444' transform='rotate(144 30 235)'/%3E%3Cellipse cx='30' cy='235' rx='5' ry='7' fill='%23EF4444' transform='rotate(216 30 235)'/%3E%3Cellipse cx='30' cy='235' rx='5' ry='7' fill='%23EF4444' transform='rotate(288 30 235)'/%3E%3Ccircle cx='30' cy='235' r='2' fill='%23FCD34D'/%3E%3Cellipse cx='25' cy='212' rx='7' ry='10' fill='%2322C55E' transform='rotate(-25 25 212)'/%3E%3C!-- Right side upper pink flower --%3E%3Cline x1='455' y1='80' x2='455' y2='100' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='455' cy='115' rx='5' ry='7' fill='%23FF69B4' transform='rotate(0 455 115)'/%3E%3Cellipse cx='455' cy='115' rx='5' ry='7' fill='%23FF69B4' transform='rotate(72 455 115)'/%3E%3Cellipse cx='455' cy='115' rx='5' ry='7' fill='%23FF69B4' transform='rotate(144 455 115)'/%3E%3Cellipse cx='455' cy='115' rx='5' ry='7' fill='%23FF69B4' transform='rotate(216 455 115)'/%3E%3Cellipse cx='455' cy='115' rx='5' ry='7' fill='%23FF69B4' transform='rotate(288 455 115)'/%3E%3Ccircle cx='455' cy='115' r='2' fill='%23FCD34D'/%3E%3Cellipse cx='460' cy='92' rx='7' ry='10' fill='%2322C55E' transform='rotate(-25 460 92)'/%3E%3C!-- Right side lower purple flower --%3E%3Cline x1='450' y1='200' x2='450' y2='220' stroke='%2322C55E' stroke-width='2'/%3E%3Cellipse cx='450' cy='235' rx='5' ry='7' fill='%238B5CF6' transform='rotate(0 450 235)'/%3E%3Cellipse cx='450' cy='235' rx='5' ry='7' fill='%238B5CF6' transform='rotate(72 450 235)'/%3E%3Cellipse cx='450' cy='235' rx='5' ry='7' fill='%238B5CF6' transform='rotate(144 450 235)'/%3E%3Cellipse cx='450' cy='235' rx='5' ry='7' fill='%238B5CF6' transform='rotate(216 450 235)'/%3E%3Cellipse cx='450' cy='235' rx='5' ry='7' fill='%238B5CF6' transform='rotate(288 450 235)'/%3E%3Ccircle cx='450' cy='235' r='2' fill='%23FCD34D'/%3E%3Cellipse cx='455' cy='212' rx='7' ry='10' fill='%2322C55E' transform='rotate(25 455 212)'/%3E%3C!-- Additional leaves scattered --%3E%3Cellipse cx='90' cy='100' rx='8' ry='12' fill='%2322C55E' transform='rotate(45 90 100)'/%3E%3Cellipse cx='180' cy='120' rx='8' ry='12' fill='%2322C55E' transform='rotate(-30 180 120)'/%3E%3Cellipse cx='300' cy='110' rx='8' ry='12' fill='%2322C55E' transform='rotate(35 300 110)'/%3E%3Cellipse cx='390' cy='100' rx='8' ry='12' fill='%2322C55E' transform='rotate(-45 390 100)'/%3E%3Cellipse cx='90' cy='200' rx='8' ry='12' fill='%2322C55E' transform='rotate(-35 90 200)'/%3E%3Cellipse cx='180' cy='190' rx='8' ry='12' fill='%2322C55E' transform='rotate(40 180 190)'/%3E%3Cellipse cx='300' cy='200' rx='8' ry='12' fill='%2322C55E' transform='rotate(-40 300 200)'/%3E%3Cellipse cx='390' cy='210' rx='8' ry='12' fill='%2322C55E' transform='rotate(30 390 210)'/%3E%3C/g%3E%3C/svg%3E")
+              `,
+              backgroundSize: '100% 100%',
+              backgroundRepeat: 'no-repeat',
+            },
+            selectedPreset === 'galaxy' && Platform.OS === 'web' && {
+              background: `
+                radial-gradient(circle at 8% 5%, rgba(255, 255, 255, 0.8) 1px, transparent 1px),
+                radial-gradient(circle at 15% 12%, rgba(255, 255, 255, 0.6) 0.8px, transparent 0.8px),
+                radial-gradient(circle at 25% 8%, rgba(255, 255, 255, 0.7) 1px, transparent 1px),
+                radial-gradient(circle at 32% 18%, rgba(255, 255, 255, 0.9) 1.2px, transparent 1.2px),
+                radial-gradient(circle at 42% 10%, rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+                radial-gradient(circle at 50% 15%, rgba(255, 255, 255, 0.8) 1px, transparent 1px),
+                radial-gradient(circle at 58% 6%, rgba(255, 255, 255, 0.6) 0.8px, transparent 0.8px),
+                radial-gradient(circle at 68% 20%, rgba(255, 255, 255, 0.9) 1px, transparent 1px),
+                radial-gradient(circle at 75% 14%, rgba(255, 255, 255, 0.7) 1px, transparent 1px),
+                radial-gradient(circle at 82% 8%, rgba(255, 255, 255, 0.8) 1.2px, transparent 1.2px),
+                radial-gradient(circle at 90% 18%, rgba(255, 255, 255, 0.6) 1px, transparent 1px),
+                radial-gradient(circle at 95% 12%, rgba(255, 255, 255, 0.7) 0.8px, transparent 0.8px),
+                radial-gradient(circle at 5% 28%, rgba(255, 255, 255, 0.9) 1px, transparent 1px),
+                radial-gradient(circle at 12% 35%, rgba(255, 255, 255, 0.6) 1px, transparent 1px),
+                radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.8) 1.2px, transparent 1.2px),
+                radial-gradient(circle at 28% 38%, rgba(255, 255, 255, 0.7) 1px, transparent 1px),
+                radial-gradient(circle at 38% 32%, rgba(255, 255, 255, 0.9) 0.8px, transparent 0.8px),
+                radial-gradient(circle at 45% 40%, rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+                radial-gradient(circle at 55% 35%, rgba(255, 255, 255, 0.8) 1px, transparent 1px),
+                radial-gradient(circle at 62% 28%, rgba(255, 255, 255, 0.6) 1.2px, transparent 1.2px),
+                radial-gradient(circle at 72% 38%, rgba(255, 255, 255, 0.9) 1px, transparent 1px),
+                radial-gradient(circle at 80% 32%, rgba(255, 255, 255, 0.7) 0.8px, transparent 0.8px),
+                radial-gradient(circle at 88% 40%, rgba(255, 255, 255, 0.8) 1px, transparent 1px),
+                radial-gradient(circle at 95% 30%, rgba(255, 255, 255, 0.6) 1px, transparent 1px),
+                radial-gradient(circle at 8% 48%, rgba(255, 255, 255, 0.7) 1px, transparent 1px),
+                radial-gradient(circle at 15% 55%, rgba(255, 255, 255, 0.9) 1.2px, transparent 1.2px),
+                radial-gradient(circle at 25% 50%, rgba(255, 255, 255, 0.6) 1px, transparent 1px),
+                radial-gradient(circle at 35% 58%, rgba(255, 255, 255, 0.8) 0.8px, transparent 0.8px),
+                radial-gradient(circle at 42% 52%, rgba(255, 255, 255, 0.7) 1px, transparent 1px),
+                radial-gradient(circle at 52% 60%, rgba(255, 255, 255, 0.9) 1px, transparent 1px),
+                radial-gradient(circle at 60% 55%, rgba(255, 255, 255, 0.5) 1.2px, transparent 1.2px),
+                radial-gradient(circle at 68% 48%, rgba(255, 255, 255, 0.8) 1px, transparent 1px),
+                radial-gradient(circle at 78% 58%, rgba(255, 255, 255, 0.6) 0.8px, transparent 0.8px),
+                radial-gradient(circle at 85% 52%, rgba(255, 255, 255, 0.9) 1px, transparent 1px),
+                radial-gradient(circle at 92% 60%, rgba(255, 255, 255, 0.7) 1px, transparent 1px),
+                radial-gradient(circle at 6% 68%, rgba(255, 255, 255, 0.8) 1px, transparent 1px),
+                radial-gradient(circle at 14% 75%, rgba(255, 255, 255, 0.6) 1.2px, transparent 1.2px),
+                radial-gradient(circle at 22% 70%, rgba(255, 255, 255, 0.9) 1px, transparent 1px),
+                radial-gradient(circle at 30% 78%, rgba(255, 255, 255, 0.7) 0.8px, transparent 0.8px),
+                radial-gradient(circle at 40% 72%, rgba(255, 255, 255, 0.8) 1px, transparent 1px),
+                radial-gradient(circle at 48% 80%, rgba(255, 255, 255, 0.6) 1px, transparent 1px),
+                radial-gradient(circle at 58% 75%, rgba(255, 255, 255, 0.9) 1.2px, transparent 1.2px),
+                radial-gradient(circle at 65% 68%, rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+                radial-gradient(circle at 75% 78%, rgba(255, 255, 255, 0.8) 0.8px, transparent 0.8px),
+                radial-gradient(circle at 82% 72%, rgba(255, 255, 255, 0.7) 1px, transparent 1px),
+                radial-gradient(circle at 90% 80%, rgba(255, 255, 255, 0.9) 1px, transparent 1px),
+                radial-gradient(circle at 96% 75%, rgba(255, 255, 255, 0.6) 1.2px, transparent 1.2px),
+                radial-gradient(circle at 10% 88%, rgba(255, 255, 255, 0.8) 1px, transparent 1px),
+                radial-gradient(circle at 18% 92%, rgba(255, 255, 255, 0.7) 0.8px, transparent 0.8px),
+                radial-gradient(circle at 28% 90%, rgba(255, 255, 255, 0.9) 1px, transparent 1px),
+                radial-gradient(circle at 38% 95%, rgba(255, 255, 255, 0.6) 1px, transparent 1px),
+                radial-gradient(circle at 45% 88%, rgba(255, 255, 255, 0.8) 1.2px, transparent 1.2px),
+                radial-gradient(circle at 55% 92%, rgba(255, 255, 255, 0.7) 1px, transparent 1px),
+                radial-gradient(circle at 65% 90%, rgba(255, 255, 255, 0.9) 0.8px, transparent 0.8px),
+                radial-gradient(circle at 72% 95%, rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+                radial-gradient(circle at 82% 88%, rgba(255, 255, 255, 0.8) 1px, transparent 1px),
+                radial-gradient(circle at 90% 92%, rgba(255, 255, 255, 0.6) 1.2px, transparent 1.2px),
+                linear-gradient(135deg, #0F1B4C 0%, #1E1B4B 30%, #4C1D95 70%, #7C3AED 100%)
+              `,
+              backgroundSize: '100% 100%',
+              backgroundRepeat: 'no-repeat',
+            },
+            selectedPreset === 'retro' && Platform.OS === 'web' && {
+              backgroundColor: '#4169E1',
+              backgroundImage: `
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 300'%3E%3Ctext x='420' y='240' font-family='Arial, sans-serif' font-size='28' font-weight='bold' fill='%234169E1'%3E30%3C/text%3E%3C/svg%3E"),
+                linear-gradient(to right, #EF4444 0%, #EF4444 100%),
+                linear-gradient(to right, #F97316 0%, #F97316 100%),
+                linear-gradient(to right, #EAB308 0%, #EAB308 100%),
+                repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.05) 0px, rgba(0, 0, 0, 0.05) 2px, transparent 2px, transparent 4px)
+              `,
+              backgroundSize: '100% 100%, 100% 8px, 100% 8px, 100% 8px, 100% 100%',
+              backgroundPosition: '0 0, 0 35%, 0 43%, 0 51%, 0 0',
+              backgroundRepeat: 'no-repeat, no-repeat, no-repeat, no-repeat, repeat',
+            },
+          ]}>
+            {/* Pattern overlay for mobile (using positioned elements) */}
+            {Platform.OS !== 'web' && selectedPreset === 'love' && (
+              <>
+                <View style={styles.loveBackground} />
+                <View style={styles.patternOverlay}>
+                  {/* SVG-style hearts using View components */}
+                  {[
+                    { x: 40, y: 38, color: '#8B0000' },
+                    { x: 136, y: 28, color: '#FF69B4' },
+                    { x: 236, y: 23, color: '#8B0000' },
+                    { x: 332, y: 28, color: '#FF69B4' },
+                    { x: 440, y: 38, color: '#8B0000' },
+                    { x: 36, y: 148, color: '#FF69B4' },
+                    { x: 444, y: 148, color: '#FF69B4' },
+                    { x: 40, y: 262, color: '#8B0000' },
+                    { x: 136, y: 272, color: '#FF69B4' },
+                    { x: 332, y: 272, color: '#FF69B4' },
+                    { x: 440, y: 262, color: '#8B0000' },
+                  ].map((heart, i) => (
+                    <View
+                      key={i}
+                      style={{
+                        position: 'absolute',
+                        left: (heart.x / 480) * 100 + '%',
+                        top: (heart.y / 300) * 100 + '%',
+                        width: 20,
+                        height: 18,
+                        backgroundColor: heart.color,
+                        transform: [{ rotate: '45deg' }],
+                        borderRadius: 10,
+                      }}
+                    >
+                      <View style={{
+                        position: 'absolute',
+                        top: -10,
+                        left: 0,
+                        width: 20,
+                        height: 20,
+                        backgroundColor: heart.color,
+                        borderRadius: 10,
+                      }} />
+                      <View style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: -10,
+                        width: 20,
+                        height: 20,
+                        backgroundColor: heart.color,
+                        borderRadius: 10,
+                      }} />
+                    </View>
+                  ))}
+                </View>
+              </>
+            )}
+            {Platform.OS !== 'web' && selectedPreset === 'retro' && (
+              <View style={styles.patternOverlay}>
+                {/* Horizontal retro stripes */}
+                <View style={[styles.retroStripe, { top: '35%', backgroundColor: '#EF4444' }]} />
+                <View style={[styles.retroStripe, { top: '43%', backgroundColor: '#F97316' }]} />
+                <View style={[styles.retroStripe, { top: '51%', backgroundColor: '#EAB308' }]} />
+                {/* Retro text on blue shell */}
+                <Text style={[styles.retroSmallText, { bottom: '15%', right: '10%' }]}>30</Text>
+              </View>
+            )}
+            {Platform.OS !== 'web' && selectedPreset === 'flowers' && (
+              <View style={styles.patternOverlay}>
+                {/* Flower emojis scattered around */}
+                <Text style={[styles.flowerEmoji, { top: 10, left: 10, fontSize: 24 }]}>🌸</Text>
+                <Text style={[styles.flowerEmoji, { top: '90%', left: '50%', fontSize: 14 }]}>💗</Text>
+                <Text style={[styles.flowerEmoji, { top: '90%', left: '68%', fontSize: 14 }]}>�<t/Text>
+                <Text style={[styles.flowerEmoji, { top: '93%', left: '89%', fontSize: 14 }]}>🧡</Text>
+                
+                {/* Side flowers */}
+                <Text style={[styles.flowerEmoji, { top: '38%', left: '7%', fontSize: 12 }]}>💜</Text>
+                <Text style={[styles.flowerEmoji, { top: '78%', left: '9%', fontSize: 12 }]}>❤️</Text>
+                <Text style={[styles.flowerEmoji, { top: '38%', left: '93%', fontSize: 12 }]}>🌸</Text>
+                <Text style={[styles.flowerEmoji, { top: '78%', left: '93%', fontSize: 12 }]}>💜</Text>
+                
+                {/* Scattered leaves */}
+                <Text style={[styles.flowerEmoji, { top: '33%', left: '28%', fontSize: 14 }]}>🍃</Text>
+                <Text style={[styles.flowerEmoji, { top: '40%', left: '37%', fontSize: 14 }]}>🍃</Text>
+                <Text style={[styles.flowerEmoji, { top: '36%', left: '62%', fontSize: 14 }]}>🍃</Text>
+                <Text style={[styles.flowerEmoji, { top: '43%', left: '81%', fontSize: 14 }]}>🍃</Text>
+                <Text style={[styles.flowerEmoji, { top: '66%', left: '28%', fontSize: 14 }]}>🍃</Text>
+                <Text style={[styles.flowerEmoji, { top: '63%', left: '37%', fontSize: 14 }]}>🍃</Text>
+                <Text style={[styles.flowerEmoji, { top: '66%', left: '62%', fontSize: 14 }]}>🍃</Text>
+                <Text style={[styles.flowerEmoji, { top: '70%', left: '81%', fontSize: 14 }]}>🍃</Text>
+              </View>
+            )}  <Text style={[styles.flowerEmoji, { top: '55%', left: 8, fontSize: 20 }]}>🌷</Text>
+                <Text style={[styles.flowerEmoji, { top: '60%', right: 8, fontSize: 22 }]}>🌹</Text>
+                <Text style={[styles.flowerEmoji, { bottom: 10, left: 15, fontSize: 24 }]}>🌸</Text>
+                <Text style={[styles.flowerEmoji, { bottom: 15, right: 15, fontSize: 26 }]}>🌼</Text>
+                <Text style={[styles.flowerEmoji, { top: '20%', left: '45%', fontSize: 20 }]}>🌺</Text>
+                <Text style={[styles.flowerEmoji, { bottom: '25%', left: '40%', fontSize: 22 }]}>🌻</Text>
+                {/* Leaves */}
+                <Text style={[styles.flowerEmoji, { top: '45%', left: '15%', fontSize: 18 }]}>🍃</Text>
+                <Text style={[styles.flowerEmoji, { top: '50%', right: '15%', fontSize: 18 }]}>🍃</Text>
+                <Text style={[styles.flowerEmoji, { top: '70%', left: '25%', fontSize: 16 }]}>🍃</Text>
+                <Text style={[styles.flowerEmoji, { top: '25%', right: '25%', fontSize: 16 }]}>🍃</Text>
+              </View>
+            )}
+            {Platform.OS !== 'web' && selectedPreset === 'galaxy' && (
+              <View style={styles.patternOverlay}>
+                {[
+                  { top: '5%', left: '8%', size: 2, opacity: 0.8 },
+                  { top: '12%', left: '15%', size: 1.5, opacity: 0.6 },
+                  { top: '8%', left: '25%', size: 2, opacity: 0.7 },
+                  { top: '18%', left: '32%', size: 2.5, opacity: 0.9 },
+                  { top: '10%', left: '42%', size: 2, opacity: 0.5 },
+                  { top: '15%', left: '50%', size: 2, opacity: 0.8 },
+                  { top: '6%', left: '58%', size: 1.5, opacity: 0.6 },
+                  { top: '20%', left: '68%', size: 2, opacity: 0.9 },
+                  { top: '14%', left: '75%', size: 2, opacity: 0.7 },
+                  { top: '8%', left: '82%', size: 2.5, opacity: 0.8 },
+                  { top: '18%', left: '90%', size: 2, opacity: 0.6 },
+                  { top: '12%', left: '95%', size: 1.5, opacity: 0.7 },
+                  { top: '28%', left: '5%', size: 2, opacity: 0.9 },
+                  { top: '35%', left: '12%', size: 2, opacity: 0.6 },
+                  { top: '30%', left: '20%', size: 2.5, opacity: 0.8 },
+                  { top: '38%', left: '28%', size: 2, opacity: 0.7 },
+                  { top: '32%', left: '38%', size: 1.5, opacity: 0.9 },
+                  { top: '40%', left: '45%', size: 2, opacity: 0.5 },
+                  { top: '35%', left: '55%', size: 2, opacity: 0.8 },
+                  { top: '28%', left: '62%', size: 2.5, opacity: 0.6 },
+                  { top: '38%', left: '72%', size: 2, opacity: 0.9 },
+                  { top: '32%', left: '80%', size: 1.5, opacity: 0.7 },
+                  { top: '40%', left: '88%', size: 2, opacity: 0.8 },
+                  { top: '30%', left: '95%', size: 2, opacity: 0.6 },
+                  { top: '48%', left: '8%', size: 2, opacity: 0.7 },
+                  { top: '55%', left: '15%', size: 2.5, opacity: 0.9 },
+                  { top: '50%', left: '25%', size: 2, opacity: 0.6 },
+                  { top: '58%', left: '35%', size: 1.5, opacity: 0.8 },
+                  { top: '52%', left: '42%', size: 2, opacity: 0.7 },
+                  { top: '60%', left: '52%', size: 2, opacity: 0.9 },
+                  { top: '55%', left: '60%', size: 2.5, opacity: 0.5 },
+                  { top: '48%', left: '68%', size: 2, opacity: 0.8 },
+                  { top: '58%', left: '78%', size: 1.5, opacity: 0.6 },
+                  { top: '52%', left: '85%', size: 2, opacity: 0.9 },
+                  { top: '60%', left: '92%', size: 2, opacity: 0.7 },
+                  { top: '68%', left: '6%', size: 2, opacity: 0.8 },
+                  { top: '75%', left: '14%', size: 2.5, opacity: 0.6 },
+                  { top: '70%', left: '22%', size: 2, opacity: 0.9 },
+                  { top: '78%', left: '30%', size: 1.5, opacity: 0.7 },
+                  { top: '72%', left: '40%', size: 2, opacity: 0.8 },
+                  { top: '80%', left: '48%', size: 2, opacity: 0.6 },
+                  { top: '75%', left: '58%', size: 2.5, opacity: 0.9 },
+                  { top: '68%', left: '65%', size: 2, opacity: 0.5 },
+                  { top: '78%', left: '75%', size: 1.5, opacity: 0.8 },
+                  { top: '72%', left: '82%', size: 2, opacity: 0.7 },
+                  { top: '80%', left: '90%', size: 2, opacity: 0.9 },
+                  { top: '75%', left: '96%', size: 2.5, opacity: 0.6 },
+                  { top: '88%', left: '10%', size: 2, opacity: 0.8 },
+                  { top: '92%', left: '18%', size: 1.5, opacity: 0.7 },
+                  { top: '90%', left: '28%', size: 2, opacity: 0.9 },
+                  { top: '95%', left: '38%', size: 2, opacity: 0.6 },
+                  { top: '88%', left: '45%', size: 2.5, opacity: 0.8 },
+                  { top: '92%', left: '55%', size: 2, opacity: 0.7 },
+                  { top: '90%', left: '65%', size: 1.5, opacity: 0.9 },
+                  { top: '95%', left: '72%', size: 2, opacity: 0.5 },
+                  { top: '88%', left: '82%', size: 2, opacity: 0.8 },
+                  { top: '92%', left: '90%', size: 2.5, opacity: 0.6 },
+                ].map((star, i) => (
+                  <View
+                    key={i}
+                    style={[
+                      styles.starDot,
+                      {
+                        top: star.top,
+                        left: star.left,
+                        width: star.size,
+                        height: star.size,
+                        borderRadius: star.size / 2,
+                        opacity: star.opacity,
+                      },
+                    ]}
+                  />
+                ))}
+              </View>
+            )}
+            
+            <View style={styles.tapeWindow}>
+              <View style={styles.reelContainer}>
+                <View style={styles.reel}>
+                  <View style={styles.reelCenter} />
+                </View>
+                <View style={styles.tapeLine} />
+                <View style={styles.reel}>
+                  <View style={styles.reelCenter} />
+                </View>
+              </View>
+              {selectedPreset === 'retro' && (
+                <Text style={styles.stereoText}>STEREO</Text>
+              )}
+            </View>
+          </View>
+        </View>
+
+        {/* Color Selector */}
+        <View style={[
+          styles.section,
+          Platform.OS === 'web' && styles.sectionCentered
+        ]}>
+          <Text style={styles.label}>COLOR</Text>
+          <View style={styles.colorRow}>
+            {COLOR_OPTIONS.map((color) => (
+              <TouchableOpacity
+                key={color}
+                style={[
+                  styles.colorSwatch,
+                  { backgroundColor: color },
+                  selectedColor === color && styles.colorSwatchSelected,
+                ]}
+                onPress={() => handleColorSelect(color)}
+              />
+            ))}
+          </View>
+        </View>
+
+        {/* Preset Gradients */}
+        <View style={styles.section}>
+          <Text style={styles.presetLabel}>PRESET</Text>
+          <View style={styles.presetGrid}>
+            {PRESET_GRADIENTS.map((preset) => (
+              <TouchableOpacity
+                key={preset.id}
+                style={[
+                  styles.presetCard,
+                  selectedPreset === preset.id && styles.presetCardSelected,
+                ]}
+                onPress={() => handlePresetSelect(preset.id)}
+              >
+                <View
+                  style={[
+                    styles.presetGradient,
+                    {
+                      background: Platform.OS === 'web' 
+                        ? `linear-gradient(135deg, ${preset.colors.join(', ')})`
+                        : preset.colors[0],
+                    },
+                    preset.id === 'galaxy' && Platform.OS === 'web' && {
+                      background: `
+                        radial-gradient(circle at 10% 15%, rgba(255, 255, 255, 0.9) 0.8px, transparent 0.8px),
+                        radial-gradient(circle at 25% 10%, rgba(255, 255, 255, 0.7) 0.6px, transparent 0.6px),
+                        radial-gradient(circle at 40% 20%, rgba(255, 255, 255, 0.8) 0.8px, transparent 0.8px),
+                        radial-gradient(circle at 55% 12%, rgba(255, 255, 255, 0.6) 0.6px, transparent 0.6px),
+                        radial-gradient(circle at 70% 18%, rgba(255, 255, 255, 0.9) 0.8px, transparent 0.8px),
+                        radial-gradient(circle at 85% 8%, rgba(255, 255, 255, 0.7) 0.6px, transparent 0.6px),
+                        radial-gradient(circle at 15% 35%, rgba(255, 255, 255, 0.8) 0.8px, transparent 0.8px),
+                        radial-gradient(circle at 30% 40%, rgba(255, 255, 255, 0.6) 0.6px, transparent 0.6px),
+                        radial-gradient(circle at 45% 32%, rgba(255, 255, 255, 0.9) 0.8px, transparent 0.8px),
+                        radial-gradient(circle at 60% 38%, rgba(255, 255, 255, 0.7) 0.6px, transparent 0.6px),
+                        radial-gradient(circle at 75% 30%, rgba(255, 255, 255, 0.8) 0.8px, transparent 0.8px),
+                        radial-gradient(circle at 90% 42%, rgba(255, 255, 255, 0.6) 0.6px, transparent 0.6px),
+                        radial-gradient(circle at 12% 55%, rgba(255, 255, 255, 0.9) 0.8px, transparent 0.8px),
+                        radial-gradient(circle at 28% 60%, rgba(255, 255, 255, 0.7) 0.6px, transparent 0.6px),
+                        radial-gradient(circle at 42% 52%, rgba(255, 255, 255, 0.8) 0.8px, transparent 0.8px),
+                        radial-gradient(circle at 58% 58%, rgba(255, 255, 255, 0.6) 0.6px, transparent 0.6px),
+                        radial-gradient(circle at 72% 50%, rgba(255, 255, 255, 0.9) 0.8px, transparent 0.8px),
+                        radial-gradient(circle at 88% 62%, rgba(255, 255, 255, 0.7) 0.6px, transparent 0.6px),
+                        radial-gradient(circle at 18% 75%, rgba(255, 255, 255, 0.8) 0.8px, transparent 0.8px),
+                        radial-gradient(circle at 32% 80%, rgba(255, 255, 255, 0.6) 0.6px, transparent 0.6px),
+                        radial-gradient(circle at 48% 72%, rgba(255, 255, 255, 0.9) 0.8px, transparent 0.8px),
+                        radial-gradient(circle at 62% 78%, rgba(255, 255, 255, 0.7) 0.6px, transparent 0.6px),
+                        radial-gradient(circle at 78% 70%, rgba(255, 255, 255, 0.8) 0.8px, transparent 0.8px),
+                        radial-gradient(circle at 92% 82%, rgba(255, 255, 255, 0.6) 0.6px, transparent 0.6px),
+                        radial-gradient(circle at 8% 90%, rgba(255, 255, 255, 0.9) 0.8px, transparent 0.8px),
+                        radial-gradient(circle at 22% 92%, rgba(255, 255, 255, 0.7) 0.6px, transparent 0.6px),
+                        radial-gradient(circle at 38% 88%, rgba(255, 255, 255, 0.8) 0.8px, transparent 0.8px),
+                        radial-gradient(circle at 52% 95%, rgba(255, 255, 255, 0.6) 0.6px, transparent 0.6px),
+                        radial-gradient(circle at 68% 90%, rgba(255, 255, 255, 0.9) 0.8px, transparent 0.8px),
+                        radial-gradient(circle at 82% 92%, rgba(255, 255, 255, 0.7) 0.6px, transparent 0.6px),
+                        linear-gradient(135deg, #0F1B4C 0%, #1E1B4B 30%, #4C1D95 70%, #7C3AED 100%)
+                      `,
+                    },
+                  ]}
+                >
+                  {preset.id === 'love' && (
+                    <View style={styles.loveHeartContainer}>
+                      <Text style={styles.loveHeartEmoji}>❤️</Text>
+                    </View>
+                  )}
+                  {preset.id === 'retro' && (
+                    <View style={styles.retroStripesContainer}>
+                      <View style={[styles.retroStripePreset, { top: '35%', backgroundColor: '#EF4444' }]} />
+                      <View style={[styles.retroStripePreset, { top: '43%', backgroundColor: '#F97316' }]} />
+                      <View style={[styles.retroStripePreset, { top: '51%', backgroundColor: '#EAB308' }]} />
+                      <Text style={[styles.retroSmallTextPreset, { bottom: '10%', right: '15%' }]}>30</Text>
+                    </View>
+                  )}
+                  {preset.id === 'flowers' && (
+                    <View style={styles.flowersContainer}>
+                      {/* Single large central flower */}
+                      <Text style={[styles.flowerEmoji, { top: '50%', left: '50%', fontSize: 50, marginLeft: -25, marginTop: -25 }]}>🌸</Text>
+                    </View>
+                  )}
+                  {preset.id === 'galaxy' && Platform.OS !== 'web' && (
+                    <View style={styles.patternOverlay}>
+                      {[
+                        { top: '15%', left: '10%', size: 1.5, opacity: 0.9 },
+                        { top: '10%', left: '25%', size: 1, opacity: 0.7 },
+                        { top: '20%', left: '40%', size: 1.5, opacity: 0.8 },
+                        { top: '12%', left: '55%', size: 1, opacity: 0.6 },
+                        { top: '18%', left: '70%', size: 1.5, opacity: 0.9 },
+                        { top: '8%', left: '85%', size: 1, opacity: 0.7 },
+                        { top: '35%', left: '15%', size: 1.5, opacity: 0.8 },
+                        { top: '40%', left: '30%', size: 1, opacity: 0.6 },
+                        { top: '32%', left: '45%', size: 1.5, opacity: 0.9 },
+                        { top: '38%', left: '60%', size: 1, opacity: 0.7 },
+                        { top: '30%', left: '75%', size: 1.5, opacity: 0.8 },
+                        { top: '42%', left: '90%', size: 1, opacity: 0.6 },
+                        { top: '55%', left: '12%', size: 1.5, opacity: 0.9 },
+                        { top: '60%', left: '28%', size: 1, opacity: 0.7 },
+                        { top: '52%', left: '42%', size: 1.5, opacity: 0.8 },
+                        { top: '58%', left: '58%', size: 1, opacity: 0.6 },
+                        { top: '50%', left: '72%', size: 1.5, opacity: 0.9 },
+                        { top: '62%', left: '88%', size: 1, opacity: 0.7 },
+                        { top: '75%', left: '18%', size: 1.5, opacity: 0.8 },
+                        { top: '80%', left: '32%', size: 1, opacity: 0.6 },
+                        { top: '72%', left: '48%', size: 1.5, opacity: 0.9 },
+                        { top: '78%', left: '62%', size: 1, opacity: 0.7 },
+                        { top: '70%', left: '78%', size: 1.5, opacity: 0.8 },
+                        { top: '82%', left: '92%', size: 1, opacity: 0.6 },
+                        { top: '90%', left: '8%', size: 1.5, opacity: 0.9 },
+                        { top: '92%', left: '22%', size: 1, opacity: 0.7 },
+                        { top: '88%', left: '38%', size: 1.5, opacity: 0.8 },
+                        { top: '95%', left: '52%', size: 1, opacity: 0.6 },
+                        { top: '90%', left: '68%', size: 1.5, opacity: 0.9 },
+                        { top: '92%', left: '82%', size: 1, opacity: 0.7 },
+                      ].map((star, i) => (
+                        <View
+                          key={i}
+                          style={[
+                            styles.starDot,
+                            {
+                              top: star.top,
+                              left: star.left,
+                              width: star.size,
+                              height: star.size,
+                              borderRadius: star.size / 2,
+                              opacity: star.opacity,
+                            },
+                          ]}
+                        />
+                      ))}
+                    </View>
+                  )}
+                </View>
+                <Text style={[styles.presetName, preset.id === 'love' && { color: '#000000' }]}>{preset.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.buttonSection}>
+          <HoverableButton
+            style={styles.changeSongsButton}
+            textStyle={styles.changeSongsButtonText}
+            onPress={onChangeSongs}
+            glowColor="#d4b8ff"
+          >
+            CHANGE SONGS
+          </HoverableButton>
+
+          <HoverableButton
+            style={styles.saveButton}
+            textStyle={styles.saveButtonText}
+            onPress={onSave}
+            glowColor="#4a4a4a"
+          >
+            SAVE MIXTAPE
+          </HoverableButton>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0a0a0a',
+  },
+  scrollContainer: {
+    flex: 1,
+  },
+  previewSection: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  tapeShell: {
+    width: 320,
+    height: 200,
+    backgroundColor: '#3a3a3a',
+    borderRadius: 12,
+    padding: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+    position: 'relative',
+    overflow: 'hidden',
+    ...(Platform.OS === 'web' && {
+      width: 480,
+      height: 300,
+      padding: 45,
+    }),
+  },
+  loveBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#F5F5DC',
+    zIndex: 0,
+  },
+  patternOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 1,
+  },
+  heartEmoji: {
+    position: 'absolute',
+    fontSize: 20,
+    color: '#8B0000',
+  },
+  flowerPetal: {
+    position: 'absolute',
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  flowerCenter: {
+    position: 'absolute',
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+  },
+  leaf: {
+    position: 'absolute',
+    width: 10,
+    height: 15,
+    borderRadius: 8,
+  },
+  starDot: {
+    position: 'absolute',
+    width: 2,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+  },
+  tapeWindow: {
+    flex: 1,
+    backgroundColor: '#000000',
+    borderRadius: 8,
+    padding: 12,
+    justifyContent: 'center',
+  },
+  reelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 20,
+  },
+  reel: {
+    width: 55,
+    height: 55,
+    borderRadius: 27.5,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#E5E5E5',
+    ...(Platform.OS === 'web' && {
+      width: 82,
+      height: 82,
+      borderRadius: 41,
+      borderWidth: 4,
+    }),
+  },
+  reelCenter: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#000000',
+    borderWidth: 2,
+    borderColor: '#666666',
+    ...(Platform.OS === 'web' && {
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+      borderWidth: 3,
+    }),
+  },
+  tapeLine: {
+    flex: 1,
+    height: 3,
+    backgroundColor: '#00CED1',
+    marginHorizontal: 8,
+    ...(Platform.OS === 'web' && {
+      height: 4,
+      marginHorizontal: 12,
+    }),
+  },
+  section: {
+    padding: 20,
+    paddingTop: 10,
+  },
+  sectionCentered: {
+    alignItems: 'center',
+  },
+  label: {
+    fontSize: 22,
+    fontFamily: Platform.OS === 'web' ? 'Staatliches' : undefined,
+    color: '#888',
+    marginBottom: 12,
+    letterSpacing: 1,
+    textAlign: 'center',
+  },
+  colorRow: {
+    flexDirection: 'row',
+    gap: 12,
+    flexWrap: 'wrap',
+  },
+  colorSwatch: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderColor: 'transparent',
+  },
+  colorSwatchSelected: {
+    borderColor: '#ffffff',
+    shadowColor: '#ffffff',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  presetLabel: {
+    fontSize: 22,
+    fontFamily: Platform.OS === 'web' ? 'Staatliches' : undefined,
+    color: '#888',
+    marginBottom: 16,
+    letterSpacing: 1.5,
+    textAlign: 'center',
+  },
+  presetGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    ...(Platform.OS === 'web' && {
+      justifyContent: 'center',
+    }),
+  },
+  presetCard: {
+    width: '47%',
+    aspectRatio: 1.5,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderWidth: 3,
+    borderColor: 'transparent',
+    ...(Platform.OS === 'web' && {
+      width: 140,
+      height: 100,
+    }),
+  },
+  presetCardSelected: {
+    borderColor: '#b794f6',
+  },
+  presetGradient: {
+    flex: 1,
+    borderRadius: 8,
+  },
+  presetName: {
+    position: 'absolute',
+    bottom: 12,
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ffffff',
+    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4,
+  },
+  buttonSection: {
+    padding: 20,
+    gap: 12,
+  },
+  changeSongsButton: {
+    backgroundColor: '#b794f6',
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+  },
+  changeSongsButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#000000',
+    letterSpacing: 1,
+  },
+  saveButton: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
+  },
+  saveButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#ffffff',
+    letterSpacing: 1,
+  },
+  loveHeartContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loveHeartEmoji: {
+    fontSize: 50,
+    ...(Platform.OS === 'web' && {
+      fontSize: 60,
+    }),
+  },
+  flowersContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  flowerEmoji: {
+    position: 'absolute',
+  },
+  retroStripe: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 8,
+  },
+  retroStripesContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  retroStripePreset: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 8,
+  },
+  retroText: {
+    position: 'absolute',
+    fontSize: 24,
+    fontWeight: 'bold',
+    fontStyle: 'italic',
+    color: '#333',
+    letterSpacing: 2,
+  },
+  retroSmallText: {
+    position: 'absolute',
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  retroTextPreset: {
+    position: 'absolute',
+    fontSize: 14,
+    fontWeight: 'bold',
+    fontStyle: 'italic',
+    color: '#333',
+    letterSpacing: 1,
+    alignSelf: 'center',
+  },
+  retroSmallTextPreset: {
+    position: 'absolute',
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#4169E1',
+  },
+  stereoText: {
+    position: 'absolute',
+    bottom: 20,
+    alignSelf: 'center',
+    fontSize: 28,
+    fontWeight: 'bold',
+    fontStyle: 'italic',
+    color: '#FFFFFF',
+    letterSpacing: 3,
+    ...(Platform.OS === 'web' && {
+      fontSize: 36,
+      bottom: 30,
+    }),
+  },
+});
