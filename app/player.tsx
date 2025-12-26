@@ -907,8 +907,6 @@ export default function PlayerScreen() {
           </TouchableOpacity>
         </View>
       )}
-
-
     </View>
   );
 }
@@ -916,7 +914,7 @@ export default function PlayerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#000000',
   },
   header: {
     flexDirection: 'row',
@@ -934,7 +932,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 32,
-    color: '#B28EF1',
+    color: '#c084fc',
     fontWeight: '300',
   },
   menuButton: {
@@ -943,10 +941,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'flex-end',
   },
+  menuButtonText: {
+    fontSize: 32,
+    color: '#c084fc',
+    fontWeight: '600',
+  },
   headerTitle: {
     fontSize: 16,
     fontFamily: 'Staatliches',
-    color: '#B28EF1',
+    color: '#c084fc',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
   },
@@ -1305,36 +1308,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: -5,
   },
-  mainControlBtnText: {
-    fontSize: 28,
-    color: '#000000',
-    textAlign: 'center',
-    ...Platform.select({
-      android: {
-        lineHeight: 28,
-        includeFontPadding: false,
-        textAlignVertical: 'center',
-      },
-    }),
-  },
-  svgPlaceholder: {
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  placeholderText: {
-    fontSize: 10,
-    color: '#ffffff',
-    fontWeight: 'bold',
-  },
   backToSelectContainer: {
     position: 'absolute',
     bottom: 20,
     left: 20,
     right: 20,
     alignItems: 'center',
-    zIndex: 25, // Above other elements but below any modals
+    zIndex: 25,
   },
   backToSelectButton: {
     backgroundColor: 'rgba(178, 142, 241, 0.2)',
@@ -1363,12 +1343,5 @@ const styles = StyleSheet.create({
     color: '#B28EF1',
     fontWeight: '600',
     textAlign: 'center',
-  },
-
-  statusText: {
-    fontSize: 14,
-    color: '#888888',
-    textAlign: 'center',
-    marginTop: 16,
   },
 });

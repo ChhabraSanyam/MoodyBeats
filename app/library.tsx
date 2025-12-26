@@ -398,6 +398,10 @@ export default function MixtapeLibraryScreen() {
               styles.themeColor,
               {
                 backgroundColor: (() => {
+                  // Use custom color if available
+                  if (mixtape.theme.customShellColor) {
+                    return mixtape.theme.customShellColor;
+                  }
                   // Use pattern color if available (this is the shell color)
                   if (mixtape.theme.pattern) {
                     return mixtape.theme.pattern;
@@ -429,6 +433,18 @@ export default function MixtapeLibraryScreen() {
 
       {/* Actions */}
       <View style={styles.cardActions}>
+        <Button
+          title="📤 Share"
+          variant="secondary"
+          size="small"
+          onPress={() => router.push(`/export?id=${mixtape.id}`)}
+          title="▶ Play"
+          variant="primary"
+          size="small"
+          onPress={() => router.push(`/player?id=${mixtape.id}`)}
+          style={styles.actionButton}
+        />
+        
         <Button
           title="📤 Share"
           variant="secondary"

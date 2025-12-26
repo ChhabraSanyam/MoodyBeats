@@ -4,7 +4,7 @@
  */
 
 import React, { useMemo } from 'react';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { TapeTheme } from '../models';
 import {
   getMonospaceFont,

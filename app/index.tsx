@@ -1,8 +1,8 @@
+import { useFonts } from 'expo-font';
 import { useRouter } from "expo-router";
+import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from "react";
 import { Platform, StyleSheet, Text, View } from "react-native";
-import { useFonts } from 'expo-font';
-import * as SplashScreen from 'expo-splash-screen';
 import { Button } from "../components";
 import { triggerLightHaptic } from "../utils/haptics";
 
@@ -108,6 +108,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 48,
     fontFamily: Platform.OS === 'web' ? 'Staatliches' : 'Staatliches',
+    fontFamily: 'Staatliches',
     color: '#ffffff',
     marginBottom: 8,
   },

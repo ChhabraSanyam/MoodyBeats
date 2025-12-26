@@ -42,9 +42,10 @@ interface HoverableButtonProps {
   textStyle?: TextStyle | TextStyle[];
   children: React.ReactNode;
   glowColor?: string;
+  disabled?: boolean;
 }
 
-function HoverableButton({ onPress, style, textStyle, children, glowColor = '#d4b8ff' }: HoverableButtonProps) {
+function HoverableButton({ onPress, style, textStyle, children, glowColor = '#d4b8ff', disabled = false }: HoverableButtonProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const webStyle = Platform.OS === 'web' && isHovered ? {
@@ -57,6 +58,7 @@ function HoverableButton({ onPress, style, textStyle, children, glowColor = '#d4
   return (
     <TouchableOpacity
       onPress={onPress}
+      disabled={disabled}
       style={[
         style,
         Platform.OS === 'web' && isHovered && {
@@ -158,43 +160,15 @@ export default function MixtapeCreatorScreen() {
   };
 
   useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  useEffect(() => {
     const newId = generateMixtapeId();
     setCurrentMixtapeId(newId);
   }, []);
-
-  useEffect(() => {
-    async function prepare() {
-      try {
-        if (fontsLoaded || fontError) {
-          if (fontError) {
-            console.warn('Font loading error:', fontError);
-          }
-          await SplashScreen.hideAsync();
-        }
-      } catch (e) {
-        console.warn('Error hiding splash screen:', e);
-      }
-    }
-    prepare();
-  }, [fontsLoaded, fontError]);
-
-  // Timeout fallback - hide splash after 3 seconds even if font doesn't load
-  useEffect(() => {
-    const timeout = setTimeout(async () => {
-      try {
-        await SplashScreen.hideAsync();
-      } catch (e) {
-        console.warn('Timeout: Error hiding splash screen:', e);
-      }
-    }, 3000);
-
-    return () => clearTimeout(timeout);
-  }, []);
-
-  // Don't block rendering if font fails to load
-  if (!fontsLoaded && !fontError) {
-    return null;
-  }
 
   // Calculate total duration
   const calculateDuration = (tracks: Track[]): number => {
@@ -519,6 +493,11 @@ export default function MixtapeCreatorScreen() {
 
 
 
+  // Early return for font loading - must be after all hooks
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
+
   return (
     <View style={styles.container}>
       <LoadingOverlay visible={isLoading} message={loadingMessage} />
@@ -656,15 +635,27 @@ export default function MixtapeCreatorScreen() {
           </HoverableButton>
 
           <HoverableButton
-            style={styles.saveButton}
-            textStyle={styles.saveButtonText}
+            style={[
+              styles.saveButton,
+              (sideA.length === 0 && sideB.length === 0) && styles.saveButtonDisabled
+            ]}
+            textStyle={[
+              styles.saveButtonText,
+              (sideA.length === 0 && sideB.length === 0) && styles.saveButtonTextDisabled
+            ]}
             onPress={async () => {
+              if (sideA.length === 0 && sideB.length === 0) {
+                await triggerErrorHaptic();
+                showToast('Add at least one song to save', 'error');
+                return;
+              }
               await triggerLightHaptic();
               await persistMixtape();
               showToast('Mixtape saved!', 'success');
               router.push('/library');
             }}
             glowColor="#4a4a4a"
+            disabled={sideA.length === 0 && sideB.length === 0}
           >
             SAVE MIXTAPE
           </HoverableButton>
@@ -946,11 +937,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#3a3a3a',
   },
+  saveButtonDisabled: {
+    backgroundColor: '#1a1a1a',
+    borderColor: '#2a2a2a',
+    opacity: 0.5,
+  },
   saveButtonText: {
     fontSize: 16,
     fontWeight: '600',
     color: '#ffffff',
     letterSpacing: 0.5,
+  },
+  saveButtonTextDisabled: {
+    color: '#666666',
   },
   themeDesignerContainer: {
     flex: 1,
