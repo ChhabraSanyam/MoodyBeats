@@ -38,12 +38,8 @@
             "backgroundColor": "#000000"
           }
         }
-<<<<<<< HEAD
-      ]
-=======
       ],
       "expo-audio"
->>>>>>> 0e52c74 (animations)
     ],
     "experiments": {
       "typedRoutes": true,
