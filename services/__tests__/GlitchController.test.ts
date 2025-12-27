@@ -6,21 +6,26 @@
 import { GlitchMode } from '../../models/PlaybackState';
 import { GlitchController } from '../GlitchController';
 
-// Mock Expo AV
-jest.mock('expo-av', () => ({
-  Audio: {
-    setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
-    Sound: {
-      createAsync: jest.fn().mockResolvedValue({
-        sound: {
-          setPositionAsync: jest.fn(),
-          playAsync: jest.fn(),
-          unloadAsync: jest.fn(),
-        },
-        status: { isLoaded: true },
-      }),
-    },
-  },
+// Mock Expo Audio
+const mockAudioPlayer = jest.fn().mockImplementation(() => ({
+  load: jest.fn().mockResolvedValue(undefined),
+  play: jest.fn().mockResolvedValue(undefined),
+  pause: jest.fn().mockResolvedValue(undefined),
+  seekTo: jest.fn().mockResolvedValue(undefined),
+  remove: jest.fn().mockResolvedValue(undefined),
+  getCurrentStatus: jest.fn().mockResolvedValue({
+    isLoaded: true,
+    duration: 180,
+    currentTime: 0,
+    isPlaying: false,
+  }),
+  addListener: jest.fn(),
+  setPlaybackRate: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock('expo-audio', () => ({
+  createAudioPlayer: mockAudioPlayer,
+  setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
 }));
 
 describe('GlitchController', () => {

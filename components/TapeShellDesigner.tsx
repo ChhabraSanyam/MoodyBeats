@@ -474,8 +474,7 @@ export default function TapeShellDesigner({
   // Render the tilt container based on platform
   const TiltContainer = Platform.OS === 'web' ? View : Animated.View;
   const tiltContainerProps = Platform.OS === 'web' 
-    ? {
-        // @ts-ignore - Web-specific props
+    ? ({
         style: [
           styles.tiltContainer,
           {
@@ -483,13 +482,13 @@ export default function TapeShellDesigner({
             transition: isDragging ? 'none' : 'transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
             cursor: isDragging ? 'grabbing' : 'grab',
             transformStyle: 'preserve-3d',
-          },
+          } as any,
         ],
         onMouseDown: handleMouseDown,
         onMouseMove: handleMouseMove,
         onMouseUp: handleMouseUp,
         onMouseLeave: handleMouseLeave,
-      }
+      } as any)
     : {
         ...panResponder.panHandlers,
         style: [
@@ -541,7 +540,7 @@ export default function TapeShellDesigner({
                       transform: `translateZ(-${depth}px)`,
                       opacity: opacity,
                       pointerEvents: 'none',
-                    }}
+                    } as any}
                   />
                 );
               })}
@@ -582,15 +581,15 @@ export default function TapeShellDesigner({
           <View style={[
             styles.tapeShell,
             { backgroundColor: selectedColor },
-            selectedPreset === 'love' && Platform.OS === 'web' && {
+            selectedPreset === 'love' && Platform.OS === 'web' && ({
               backgroundColor: '#F5F5DC',
               backgroundImage: `
                 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 300'%3E%3Cg%3E%3C!-- Top left (red) --%3E%3Cpath fill='%238B0000' d='M 60 38 C 60 30 56 26 50 26 C 44 26 40 30 40 38 C 40 30 36 26 30 26 C 24 26 20 30 20 38 C 20 49 40 61 40 61 C 40 61 60 49 60 38 Z'/%3E%3C!-- Top center left (pink) --%3E%3Cpath fill='%23FF69B4' d='M 152 28 C 152 22 149 19 144 19 C 139 19 136 22 136 28 C 136 22 133 19 128 19 C 123 19 120 22 120 28 C 120 37 136 47 136 47 C 136 47 152 37 152 28 Z'/%3E%3C!-- Top center (red) --%3E%3Cpath fill='%238B0000' d='M 252 23 C 252 17 249 14 244 14 C 239 14 236 17 236 23 C 236 17 233 14 228 14 C 223 14 220 17 220 23 C 220 32 236 42 236 42 C 236 42 252 32 252 23 Z'/%3E%3C!-- Top center right (pink) --%3E%3Cpath fill='%23FF69B4' d='M 348 28 C 348 22 345 19 340 19 C 335 19 332 22 332 28 C 332 22 329 19 324 19 C 319 19 316 22 316 28 C 316 37 332 47 332 47 C 332 47 348 37 348 28 Z'/%3E%3C!-- Top right (red) --%3E%3Cpath fill='%238B0000' d='M 460 38 C 460 30 456 26 450 26 C 444 26 440 30 440 38 C 440 30 436 26 430 26 C 424 26 420 30 420 38 C 420 49 440 61 440 61 C 440 61 460 49 460 38 Z'/%3E%3C!-- Left side top (red) --%3E%3Cpath fill='%238B0000' d='M 52 88 C 52 81 49 78 44 78 C 39 78 36 81 36 88 C 36 81 33 78 28 78 C 23 78 20 81 20 88 C 20 98 36 108 36 108 C 36 108 52 98 52 88 Z'/%3E%3C!-- Left side middle (pink) --%3E%3Cpath fill='%23FF69B4' d='M 52 148 C 52 141 49 138 44 138 C 39 138 36 141 36 148 C 36 141 33 138 28 138 C 23 138 20 141 20 148 C 20 158 36 168 36 168 C 36 168 52 158 52 148 Z'/%3E%3C!-- Left side bottom (red) --%3E%3Cpath fill='%238B0000' d='M 52 208 C 52 201 49 198 44 198 C 39 198 36 201 36 208 C 36 201 33 198 28 198 C 23 198 20 201 20 208 C 20 218 36 228 36 228 C 36 228 52 218 52 208 Z'/%3E%3C!-- Right side top (pink) --%3E%3Cpath fill='%23FF69B4' d='M 460 88 C 460 81 457 78 452 78 C 447 78 444 81 444 88 C 444 81 441 78 436 78 C 431 78 428 81 428 88 C 428 98 444 108 444 108 C 444 108 460 98 460 88 Z'/%3E%3C!-- Right side middle (red) --%3E%3Cpath fill='%238B0000' d='M 460 148 C 460 141 457 138 452 138 C 447 138 444 141 444 148 C 444 141 441 138 436 138 C 431 138 428 141 428 148 C 428 158 444 168 444 168 C 444 168 460 158 460 148 Z'/%3E%3C!-- Right side bottom (pink) --%3E%3Cpath fill='%23FF69B4' d='M 460 208 C 460 201 457 198 452 198 C 447 198 444 201 444 208 C 444 201 441 198 436 198 C 431 198 428 201 428 208 C 428 218 444 228 444 228 C 444 228 460 218 460 208 Z'/%3E%3C!-- Bottom left (red) --%3E%3Cpath fill='%238B0000' d='M 60 262 C 60 254 56 250 50 250 C 44 250 40 254 40 262 C 40 254 36 250 30 250 C 24 250 20 254 20 262 C 20 273 40 285 40 285 C 40 285 60 273 60 262 Z'/%3E%3C!-- Bottom center left (pink) --%3E%3Cpath fill='%23FF69B4' d='M 152 272 C 152 266 149 263 144 263 C 139 263 136 266 136 272 C 136 266 133 263 128 263 C 123 263 120 266 120 272 C 120 281 136 291 136 291 C 136 291 152 281 152 272 Z'/%3E%3C!-- Bottom center right (pink) --%3E%3Cpath fill='%23FF69B4' d='M 348 272 C 348 266 345 263 340 263 C 335 263 332 266 332 272 C 332 266 329 263 324 263 C 319 263 316 266 316 272 C 316 281 332 291 332 291 C 332 291 348 281 348 272 Z'/%3E%3C!-- Bottom right (red) --%3E%3Cpath fill='%238B0000' d='M 460 262 C 460 254 456 250 450 250 C 444 250 440 254 440 262 C 440 254 436 250 430 250 C 424 250 420 254 420 262 C 420 273 440 285 440 285 C 440 285 460 273 460 262 Z'/%3E%3C!-- Additional bottom hearts evenly spaced --%3E%3Cpath fill='%238B0000' d='M 100 268 C 100 262 97 259 93 259 C 89 259 86 262 86 268 C 86 262 83 259 79 259 C 75 259 72 262 72 268 C 72 276 86 285 86 285 C 86 285 100 276 100 268 Z'/%3E%3Cpath fill='%23FF69B4' d='M 200 265 C 200 259 197 256 193 256 C 189 256 186 259 186 265 C 186 259 183 256 179 256 C 175 256 172 259 172 265 C 172 273 186 282 186 282 C 186 282 200 273 200 265 Z'/%3E%3Cpath fill='%238B0000' d='M 280 268 C 280 262 277 259 273 259 C 269 259 266 262 266 268 C 266 262 263 259 259 259 C 255 259 252 262 252 268 C 252 276 266 285 266 285 C 266 285 280 276 280 268 Z'/%3E%3Cpath fill='%23FF69B4' d='M 390 265 C 390 259 387 256 383 256 C 379 256 376 259 376 265 C 376 259 373 256 369 256 C 365 256 362 259 362 265 C 362 273 376 282 376 282 C 376 282 390 273 390 265 Z'/%3E%3C/g%3E%3C/svg%3E")
               `,
               backgroundSize: '100% 100%',
               backgroundRepeat: 'no-repeat',
-            },
-           selectedPreset === 'flowers' && Platform.OS === 'web' && {
+            } as any),
+           selectedPreset === 'flowers' && Platform.OS === 'web' && ({
   background: `#EAB308`,
   backgroundImage: `
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 300'%3E%3Crect width='480' height='300' fill='%23EAB308'/%3E%3Cg%3E%3C!-- Top border flowers --%3E%3C!-- Violet --%3E%3Ccircle cx='60' cy='10' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='68' cy='15' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='68' cy='25' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='60' cy='30' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='52' cy='25' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='52' cy='15' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='60' cy='20' r='5' fill='%23F97316'/%3E%3C!-- Indigo --%3E%3Ccircle cx='160' cy='10' r='6' fill='%234F46E5'/%3E%3Ccircle cx='168' cy='15' r='6' fill='%234F46E5'/%3E%3Ccircle cx='168' cy='25' r='6' fill='%234F46E5'/%3E%3Ccircle cx='160' cy='30' r='6' fill='%234F46E5'/%3E%3Ccircle cx='152' cy='25' r='6' fill='%234F46E5'/%3E%3Ccircle cx='152' cy='15' r='6' fill='%234F46E5'/%3E%3Ccircle cx='160' cy='20' r='5' fill='%23F97316'/%3E%3C!-- Blue --%3E%3Ccircle cx='240' cy='10' r='6' fill='%233B82F6'/%3E%3Ccircle cx='248' cy='15' r='6' fill='%233B82F6'/%3E%3Ccircle cx='248' cy='25' r='6' fill='%233B82F6'/%3E%3Ccircle cx='240' cy='30' r='6' fill='%233B82F6'/%3E%3Ccircle cx='232' cy='25' r='6' fill='%233B82F6'/%3E%3Ccircle cx='232' cy='15' r='6' fill='%233B82F6'/%3E%3Ccircle cx='240' cy='20' r='5' fill='%23F97316'/%3E%3C!-- Green --%3E%3Ccircle cx='320' cy='10' r='6' fill='%2322C55E'/%3E%3Ccircle cx='328' cy='15' r='6' fill='%2322C55E'/%3E%3Ccircle cx='328' cy='25' r='6' fill='%2322C55E'/%3E%3Ccircle cx='320' cy='30' r='6' fill='%2322C55E'/%3E%3Ccircle cx='312' cy='25' r='6' fill='%2322C55E'/%3E%3Ccircle cx='312' cy='15' r='6' fill='%2322C55E'/%3E%3Ccircle cx='320' cy='20' r='5' fill='%23F97316'/%3E%3C!-- Red --%3E%3Ccircle cx='420' cy='10' r='6' fill='%23EF4444'/%3E%3Ccircle cx='428' cy='15' r='6' fill='%23EF4444'/%3E%3Ccircle cx='428' cy='25' r='6' fill='%23EF4444'/%3E%3Ccircle cx='420' cy='30' r='6' fill='%23EF4444'/%3E%3Ccircle cx='412' cy='25' r='6' fill='%23EF4444'/%3E%3Ccircle cx='412' cy='15' r='6' fill='%23EF4444'/%3E%3Ccircle cx='420' cy='20' r='5' fill='%23F97316'/%3E%3C!-- Left border flowers --%3E%3C!-- Red --%3E%3Ccircle cx='25' cy='65' r='6' fill='%23EF4444'/%3E%3Ccircle cx='33' cy='70' r='6' fill='%23EF4444'/%3E%3Ccircle cx='33' cy='80' r='6' fill='%23EF4444'/%3E%3Ccircle cx='25' cy='85' r='6' fill='%23EF4444'/%3E%3Ccircle cx='17' cy='80' r='6' fill='%23EF4444'/%3E%3Ccircle cx='17' cy='70' r='6' fill='%23EF4444'/%3E%3Ccircle cx='25' cy='75' r='5' fill='%23F97316'/%3E%3C!-- Violet --%3E%3Ccircle cx='25' cy='140' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='33' cy='145' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='33' cy='155' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='25' cy='160' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='17' cy='155' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='17' cy='145' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='25' cy='150' r='5' fill='%23F97316'/%3E%3C!-- Indigo --%3E%3Ccircle cx='25' cy='215' r='6' fill='%234F46E5'/%3E%3Ccircle cx='33' cy='220' r='6' fill='%234F46E5'/%3E%3Ccircle cx='33' cy='230' r='6' fill='%234F46E5'/%3E%3Ccircle cx='25' cy='235' r='6' fill='%234F46E5'/%3E%3Ccircle cx='17' cy='230' r='6' fill='%234F46E5'/%3E%3Ccircle cx='17' cy='220' r='6' fill='%234F46E5'/%3E%3Ccircle cx='25' cy='225' r='5' fill='%23F97316'/%3E%3C!-- Right border flowers --%3E%3C!-- Blue --%3E%3Ccircle cx='455' cy='65' r='6' fill='%233B82F6'/%3E%3Ccircle cx='463' cy='70' r='6' fill='%233B82F6'/%3E%3Ccircle cx='463' cy='80' r='6' fill='%233B82F6'/%3E%3Ccircle cx='455' cy='85' r='6' fill='%233B82F6'/%3E%3Ccircle cx='447' cy='80' r='6' fill='%233B82F6'/%3E%3Ccircle cx='447' cy='70' r='6' fill='%233B82F6'/%3E%3Ccircle cx='455' cy='75' r='5' fill='%23F97316'/%3E%3C!-- Green --%3E%3Ccircle cx='455' cy='140' r='6' fill='%2322C55E'/%3E%3Ccircle cx='463' cy='145' r='6' fill='%2322C55E'/%3E%3Ccircle cx='463' cy='155' r='6' fill='%2322C55E'/%3E%3Ccircle cx='455' cy='160' r='6' fill='%2322C55E'/%3E%3Ccircle cx='447' cy='155' r='6' fill='%2322C55E'/%3E%3Ccircle cx='447' cy='145' r='6' fill='%2322C55E'/%3E%3Ccircle cx='455' cy='150' r='5' fill='%23F97316'/%3E%3C!-- Red --%3E%3Ccircle cx='455' cy='215' r='6' fill='%23EF4444'/%3E%3Ccircle cx='463' cy='220' r='6' fill='%23EF4444'/%3E%3Ccircle cx='463' cy='230' r='6' fill='%23EF4444'/%3E%3Ccircle cx='455' cy='235' r='6' fill='%23EF4444'/%3E%3Ccircle cx='447' cy='230' r='6' fill='%23EF4444'/%3E%3Ccircle cx='447' cy='220' r='6' fill='%23EF4444'/%3E%3Ccircle cx='455' cy='225' r='5' fill='%23F97316'/%3E%3C!-- Bottom border flowers --%3E%3C!-- Red --%3E%3Ccircle cx='60' cy='270' r='6' fill='%23EF4444'/%3E%3Ccircle cx='68' cy='275' r='6' fill='%23EF4444'/%3E%3Ccircle cx='68' cy='285' r='6' fill='%23EF4444'/%3E%3Ccircle cx='60' cy='290' r='6' fill='%23EF4444'/%3E%3Ccircle cx='52' cy='285' r='6' fill='%23EF4444'/%3E%3Ccircle cx='52' cy='275' r='6' fill='%23EF4444'/%3E%3Ccircle cx='60' cy='280' r='5' fill='%23F97316'/%3E%3C!-- Violet --%3E%3Ccircle cx='160' cy='270' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='168' cy='275' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='168' cy='285' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='160' cy='290' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='152' cy='285' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='152' cy='275' r='6' fill='%238B5CF6'/%3E%3Ccircle cx='160' cy='280' r='5' fill='%23F97316'/%3E%3C!-- Indigo --%3E%3Ccircle cx='240' cy='270' r='6' fill='%234F46E5'/%3E%3Ccircle cx='248' cy='275' r='6' fill='%234F46E5'/%3E%3Ccircle cx='248' cy='285' r='6' fill='%234F46E5'/%3E%3Ccircle cx='240' cy='290' r='6' fill='%234F46E5'/%3E%3Ccircle cx='232' cy='285' r='6' fill='%234F46E5'/%3E%3Ccircle cx='232' cy='275' r='6' fill='%234F46E5'/%3E%3Ccircle cx='240' cy='280' r='5' fill='%23F97316'/%3E%3C!-- Blue --%3E%3Ccircle cx='320' cy='270' r='6' fill='%233B82F6'/%3E%3Ccircle cx='328' cy='275' r='6' fill='%233B82F6'/%3E%3Ccircle cx='328' cy='285' r='6' fill='%233B82F6'/%3E%3Ccircle cx='320' cy='290' r='6' fill='%233B82F6'/%3E%3Ccircle cx='312' cy='285' r='6' fill='%233B82F6'/%3E%3Ccircle cx='312' cy='275' r='6' fill='%233B82F6'/%3E%3Ccircle cx='320' cy='280' r='5' fill='%23F97316'/%3E%3C!-- Green --%3E%3Ccircle cx='420' cy='270' r='6' fill='%2322C55E'/%3E%3Ccircle cx='428' cy='275' r='6' fill='%2322C55E'/%3E%3Ccircle cx='428' cy='285' r='6' fill='%2322C55E'/%3E%3Ccircle cx='420' cy='290' r='6' fill='%2322C55E'/%3E%3Ccircle cx='412' cy='285' r='6' fill='%2322C55E'/%3E%3Ccircle cx='412' cy='275' r='6' fill='%2322C55E'/%3E%3Ccircle cx='420' cy='280' r='5' fill='%23F97316'/%3E%3C/g%3E%3C/svg%3E")
@@ -598,8 +597,8 @@ export default function TapeShellDesigner({
   
               backgroundSize: '100% 100%',
               backgroundRepeat: 'no-repeat',
-            },
-            selectedPreset === 'galaxy' && Platform.OS === 'web' && {
+            } as any),
+            selectedPreset === 'galaxy' && Platform.OS === 'web' && ({
               background: `
                 radial-gradient(circle at 8% 5%, rgba(255, 255, 255, 0.95) 1px, transparent 1px),
                 radial-gradient(circle at 15% 8%, rgba(255, 255, 255, 0.4) 0.8px, transparent 0.8px),
@@ -646,8 +645,8 @@ export default function TapeShellDesigner({
               backgroundSize: '100% 100%',
               backgroundRepeat: 'no-repeat',
               overflow: 'hidden',
-            },
-            selectedPreset === 'retro' && Platform.OS === 'web' && {
+            } as any),
+            selectedPreset === 'retro' && Platform.OS === 'web' && ({
               backgroundColor: '#4169E1',
               backgroundImage: `
                 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 480 300'%3E%3Ctext x='420' y='240' font-family='Arial, sans-serif' font-size='28' font-weight='bold' fill='%234169E1'%3E30%3C/text%3E%3C/svg%3E"),
@@ -659,7 +658,7 @@ export default function TapeShellDesigner({
               backgroundSize: '100% 100%, 100% 8px, 100% 8px, 100% 8px, 100% 100%',
               backgroundPosition: '0 0, 0 35%, 0 43%, 0 51%, 0 0',
               backgroundRepeat: 'no-repeat, no-repeat, no-repeat, no-repeat, repeat',
-            },
+            } as any),
           ]}>
             {/* Pattern overlay for mobile (using positioned elements) */}
             {Platform.OS !== 'web' && selectedPreset === 'love' && (
@@ -862,8 +861,8 @@ export default function TapeShellDesigner({
                     style={[
                       styles.starDot,
                       {
-                        top: star.top,
-                        left: star.left,
+                        top: star.top as any,
+                        left: star.left as any,
                         width: star.size,
                         height: star.size,
                         borderRadius: star.size / 2,
@@ -931,9 +930,9 @@ export default function TapeShellDesigner({
                   style={[
                     styles.presetGradient,
                     Platform.OS === 'web' 
-                      ? {
+                      ? ({
                           background: `linear-gradient(135deg, ${preset.colors.join(', ')})`,
-                        }
+                        } as any)
                       : {
                           backgroundColor: preset.id === 'love' ? '#F5F5F5' 
                             : preset.id === 'retro' ? '#5B7FD8'
@@ -1077,8 +1076,8 @@ export default function TapeShellDesigner({
                           style={[
                             styles.starDot,
                             {
-                              top: star.top,
-                              left: star.left,
+                              top: star.top as any,
+                              left: star.left as any,
                               width: star.size,
                               height: star.size,
                               borderRadius: star.size / 2,
@@ -1101,7 +1100,7 @@ export default function TapeShellDesigner({
           <HoverableButton
             style={styles.changeSongsButton}
             textStyle={styles.changeSongsButtonText}
-            onPress={onChangeSongs}
+            onPress={onChangeSongs || (() => {})}
             glowColor="#d4b8ff"
           >
             CHANGE SONGS
@@ -1110,7 +1109,7 @@ export default function TapeShellDesigner({
           <HoverableButton
             style={styles.saveButton}
             textStyle={styles.saveButtonText}
-            onPress={onSave}
+            onPress={onSave || (() => {})}
             glowColor="#4a4a4a"
           >
             SAVE MIXTAPE
@@ -1140,11 +1139,8 @@ const styles = StyleSheet.create({
     }),
   },
   tapeShell: {
-    width: 320,
-    height: 200,
     backgroundColor: '#3a3a3a',
     borderRadius: 12,
-    padding: 30,
     position: 'relative',
     overflow: Platform.OS === 'web' ? 'hidden' : 'visible',
     ...(Platform.OS === 'web' 
@@ -1160,13 +1156,23 @@ const styles = StyleSheet.create({
             0 -8px 20px -8px rgba(0, 0, 0, 0.5),
             0 8px 20px -8px rgba(0, 0, 0, 0.5)
           `,
-        }
+        } as any
       : {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
-          elevation: 8,
+          width: 320,
+          height: 200,
+          padding: 30,
+          ...Platform.select({
+            web: {
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
+            } as any,
+            default: {
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.3,
+              shadowRadius: 8,
+              elevation: 8,
+            },
+          }),
         }),
   },
   loveBackground: {
@@ -1349,15 +1355,15 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     textAlign: 'center',
-    fontSize: 14,
     fontWeight: '600',
     color: '#ffffff',
     ...(Platform.OS === 'web' 
       ? { 
           fontSize: 18,
           textShadow: '0px 1px 4px rgba(0, 0, 0, 0.8)',
-        }
+        } as any
       : {
+          fontSize: 14,
           textShadowColor: 'rgba(0, 0, 0, 0.8)',
           textShadowOffset: { width: 0, height: 1 },
           textShadowRadius: 4,

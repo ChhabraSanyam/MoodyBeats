@@ -4,7 +4,8 @@
  * Requirements: 11.1, 11.2, 11.3, 11.4, 11.5
  */
 
-import { Audio } from 'expo-av';
+import { setAudioModeAsync } from 'expo-audio';
+import type { AudioPlayer } from 'expo-audio/build/AudioModule.types';
 import { GlitchMode } from '../models/PlaybackState';
 
 // Constants
@@ -34,7 +35,7 @@ export class GlitchController {
   private ffRewHistory: FFREWAction[] = [];
   private lastGlitchTime: number = 0;
   private glitchTriggerCallbacks: Set<GlitchTriggerCallback> = new Set();
-  private jumpscareSound: Audio.Sound | null = null;
+  private jumpscareSound: AudioPlayer | null = null;
   private isInitialized: boolean = false;
 
   // Available glitch visual effects
@@ -66,15 +67,17 @@ export class GlitchController {
 
     try {
       // Configure audio mode for jumpscare sounds
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: false,
-        shouldDuckAndroid: false, // Don't duck - we want full volume for jumpscares
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        shouldPlayInBackground: false,
+        interruptionMode: 'doNotMix', // Don't duck - we want full volume for jumpscares
       });
 
       this.isInitialized = true;
     } catch (error) {
-      console.error('Error initializing glitch controller:', error);
+      if (__DEV__) {
+        console.error('Error initializing glitch controller:', error);
+      }
     }
   }
 
@@ -190,8 +193,6 @@ export class GlitchController {
     // Clear button press history to prevent immediate re-trigger
     this.buttonPressHistory = [];
     this.ffRewHistory = [];
-
-    console.log(`Glitch triggered! Reason: ${reason}, Effect: ${visualEffect}`);
   }
 
   /**
@@ -220,23 +221,22 @@ export class GlitchController {
     try {
       // Unload previous jumpscare if any
       if (this.jumpscareSound) {
-        await this.jumpscareSound.unloadAsync();
+        await this.jumpscareSound.remove();
         this.jumpscareSound = null;
       }
 
       // Note: In a real implementation, these would be actual audio files
-      // For now, we'll create a placeholder that logs the jumpscare
-      console.log(`Playing jumpscare: ${jumpscareFile}`);
+      // For now, we'll create a placeholder that does nothing
 
       // In production, this would be:
-      // const { sound } = await Audio.Sound.createAsync(
-      //   require(`../assets/sounds/jumpscares/${jumpscareFile}.mp3`),
-      //   { shouldPlay: true, volume: 1.0 }
-      // );
-      // this.jumpscareSound = sound;
+      // this.jumpscareSound = new AudioPlayer(require(`../assets/sounds/jumpscares/${jumpscareFile}.mp3`));
+      // await this.jumpscareSound.load();
+      // await this.jumpscareSound.play();
 
     } catch (error) {
-      console.error('Error playing jumpscare:', error);
+      if (__DEV__) {
+        console.error('Error playing jumpscare:', error);
+      }
     }
   }
 
@@ -260,7 +260,9 @@ export class GlitchController {
       try {
         callback(glitchMode);
       } catch (error) {
-        console.error('Error in glitch trigger callback:', error);
+        if (__DEV__) {
+          console.error('Error in glitch trigger callback:', error);
+        }
       }
     });
   }
@@ -308,9 +310,11 @@ export class GlitchController {
   async cleanup(): Promise<void> {
     if (this.jumpscareSound) {
       try {
-        await this.jumpscareSound.unloadAsync();
+        await this.jumpscareSound.remove();
       } catch (error) {
-        console.error('Error unloading jumpscare sound:', error);
+        if (__DEV__) {
+          console.error('Error unloading jumpscare sound:', error);
+        }
       }
       this.jumpscareSound = null;
     }

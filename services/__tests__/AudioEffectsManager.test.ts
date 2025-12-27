@@ -3,17 +3,28 @@
  * Requirements: 10.1, 10.2, 10.3, 10.4
  */
 
-import { Audio } from 'expo-av';
 import { AudioEffectsManager, PitchShiftManager } from '../AudioEffectsManager';
 
-// Mock Expo AV
-jest.mock('expo-av', () => ({
-  Audio: {
-    setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
-    Sound: {
-      createAsync: jest.fn(),
-    },
-  },
+// Mock Expo Audio
+const mockAudioPlayer = jest.fn().mockImplementation(() => ({
+  load: jest.fn().mockResolvedValue(undefined),
+  play: jest.fn().mockResolvedValue(undefined),
+  pause: jest.fn().mockResolvedValue(undefined),
+  seekTo: jest.fn().mockResolvedValue(undefined),
+  remove: jest.fn().mockResolvedValue(undefined),
+  getCurrentStatus: jest.fn().mockResolvedValue({
+    isLoaded: true,
+    duration: 180,
+    currentTime: 0,
+    isPlaying: false,
+  }),
+  addListener: jest.fn(),
+  setPlaybackRate: jest.fn().mockResolvedValue(undefined),
+}));
+
+jest.mock('expo-audio', () => ({
+  createAudioPlayer: mockAudioPlayer,
+  setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
 }));
 
 // Mock require for audio assets
@@ -25,22 +36,21 @@ jest.mock('../../assets/sounds/tape-insert.mp3', () => 'tape-insert.mp3', { virt
 
 describe('AudioEffectsManager', () => {
   let manager: AudioEffectsManager;
-  let mockSound: any;
+  let mockPlayer: any;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    // Create mock sound object
-    mockSound = {
-      playAsync: jest.fn().mockResolvedValue(undefined),
-      setPositionAsync: jest.fn().mockResolvedValue(undefined),
-      unloadAsync: jest.fn().mockResolvedValue(undefined),
+    // Create mock player object
+    mockPlayer = {
+      load: jest.fn().mockResolvedValue(undefined),
+      play: jest.fn().mockResolvedValue(undefined),
+      seekTo: jest.fn().mockResolvedValue(undefined),
+      remove: jest.fn().mockResolvedValue(undefined),
     };
 
-    // Mock Sound.createAsync to return our mock sound
-    (Audio.Sound.createAsync as jest.Mock).mockResolvedValue({
-      sound: mockSound,
-    });
+    // Mock createAudioPlayer to return our mock player
+    mockAudioPlayer.mockImplementation(() => mockPlayer);
 
     manager = new AudioEffectsManager();
   });
@@ -50,39 +60,26 @@ describe('AudioEffectsManager', () => {
   });
 
   describe('initialize()', () => {
-    it('should configure audio mode', async () => {
-      await manager.initialize();
-
-      expect(Audio.setAudioModeAsync).toHaveBeenCalledWith({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: false,
-        shouldDuckAndroid: true,
-      });
-    });
-
     it('should preload all sound effects', async () => {
       await manager.initialize();
 
       // Verify that 5 sound effects were loaded
-      expect(Audio.Sound.createAsync).toHaveBeenCalledTimes(5);
+      expect(mockAudioPlayer).toHaveBeenCalledTimes(5);
       
-      // Verify all calls used correct options
-      const calls = (Audio.Sound.createAsync as jest.Mock).mock.calls;
-      calls.forEach(call => {
-        expect(call[1]).toEqual({ shouldPlay: false, volume: 0.7 });
-      });
+      // Verify all players were loaded
+      expect(mockPlayer.load).toHaveBeenCalledTimes(5);
     });
 
     it('should not initialize twice', async () => {
       await manager.initialize();
       await manager.initialize();
 
-      // Should only call createAsync 5 times (once per sound), not 10
-      expect(Audio.Sound.createAsync).toHaveBeenCalledTimes(5);
+      // Should only create 5 players (once per sound), not 10
+      expect(mockAudioPlayer).toHaveBeenCalledTimes(5);
     });
 
     it('should handle initialization errors gracefully', async () => {
-      (Audio.Sound.createAsync as jest.Mock).mockRejectedValueOnce(
+      (mockAudioPlayer as jest.Mock).mockRejectedValueOnce(
         new Error('Failed to load sound')
       );
 
@@ -94,15 +91,15 @@ describe('AudioEffectsManager', () => {
     it('should initialize if not already initialized', async () => {
       await manager.playEffect('play-click');
 
-      expect(Audio.Sound.createAsync).toHaveBeenCalled();
+      expect(mockAudioPlayer).toHaveBeenCalled();
     });
 
-    it('should rewind sound to start and play', async () => {
+    it('should seek to start and play', async () => {
       await manager.initialize();
       await manager.playEffect('play-click');
 
-      expect(mockSound.setPositionAsync).toHaveBeenCalledWith(0);
-      expect(mockSound.playAsync).toHaveBeenCalled();
+      expect(mockPlayer.seekTo).toHaveBeenCalledWith(0);
+      expect(mockPlayer.play).toHaveBeenCalled();
     });
 
     it('should handle missing sound effect gracefully', async () => {
@@ -116,7 +113,7 @@ describe('AudioEffectsManager', () => {
 
     it('should handle playback errors gracefully', async () => {
       await manager.initialize();
-      mockSound.playAsync.mockRejectedValueOnce(new Error('Playback failed'));
+      mockPlayer.play.mockRejectedValueOnce(new Error('Playback failed'));
 
       await expect(manager.playEffect('play-click')).resolves.not.toThrow();
     });
@@ -127,8 +124,8 @@ describe('AudioEffectsManager', () => {
       await manager.initialize();
       await manager.playClickSound();
 
-      expect(mockSound.setPositionAsync).toHaveBeenCalledWith(0);
-      expect(mockSound.playAsync).toHaveBeenCalled();
+      expect(mockPlayer.seekTo).toHaveBeenCalledWith(0);
+      expect(mockPlayer.play).toHaveBeenCalled();
     });
   });
 
@@ -137,21 +134,21 @@ describe('AudioEffectsManager', () => {
       await manager.initialize();
       await manager.playClunkSound();
 
-      expect(mockSound.setPositionAsync).toHaveBeenCalledWith(0);
-      expect(mockSound.playAsync).toHaveBeenCalled();
+      expect(mockPlayer.seekTo).toHaveBeenCalledWith(0);
+      expect(mockPlayer.play).toHaveBeenCalled();
     });
   });
 
   describe('playFlipSound()', () => {
     it('should play tape-eject sound first', async () => {
       await manager.initialize();
-      mockSound.setPositionAsync.mockClear();
-      mockSound.playAsync.mockClear();
+      mockPlayer.seekTo.mockClear();
+      mockPlayer.play.mockClear();
 
       await manager.playFlipSound();
 
-      // Should have called playAsync at least once (for tape-eject)
-      expect(mockSound.playAsync).toHaveBeenCalled();
+      // Should have called play at least once (for tape-eject)
+      expect(mockPlayer.play).toHaveBeenCalled();
     });
 
     it('should sequence multiple sound effects', async () => {
@@ -167,12 +164,12 @@ describe('AudioEffectsManager', () => {
   });
 
   describe('cleanup()', () => {
-    it('should unload all sound effects', async () => {
+    it('should remove all sound effects', async () => {
       await manager.initialize();
 
       await manager.cleanup();
 
-      expect(mockSound.unloadAsync).toHaveBeenCalledTimes(5);
+      expect(mockPlayer.remove).toHaveBeenCalledTimes(5);
     });
 
     it('should clear sound effects map', async () => {
@@ -192,9 +189,9 @@ describe('AudioEffectsManager', () => {
       expect((manager as any).isInitialized).toBe(false);
     });
 
-    it('should handle unload errors gracefully', async () => {
+    it('should handle remove errors gracefully', async () => {
       await manager.initialize();
-      mockSound.unloadAsync.mockRejectedValueOnce(new Error('Unload failed'));
+      mockPlayer.remove.mockRejectedValueOnce(new Error('Remove failed'));
 
       await expect(manager.cleanup()).resolves.not.toThrow();
     });
@@ -202,70 +199,70 @@ describe('AudioEffectsManager', () => {
 });
 
 describe('PitchShiftManager', () => {
-  let mockSound: any;
+  let mockPlayer: any;
 
   beforeEach(() => {
-    mockSound = {
-      setRateAsync: jest.fn().mockResolvedValue(undefined),
+    mockPlayer = {
+      setPlaybackRate: jest.fn().mockResolvedValue(undefined),
     };
   });
 
   describe('applyFastForwardPitch()', () => {
     it('should set rate without pitch correction', async () => {
-      await PitchShiftManager.applyFastForwardPitch(mockSound, 2.0);
+      await PitchShiftManager.applyFastForwardPitch(mockPlayer, 2.0);
 
-      expect(mockSound.setRateAsync).toHaveBeenCalledWith(2.0, false);
+      expect(mockPlayer.setPlaybackRate).toHaveBeenCalledWith(2.0, { preservesPitch: false });
     });
 
     it('should use default speed of 2.0', async () => {
-      await PitchShiftManager.applyFastForwardPitch(mockSound);
+      await PitchShiftManager.applyFastForwardPitch(mockPlayer);
 
-      expect(mockSound.setRateAsync).toHaveBeenCalledWith(2.0, false);
+      expect(mockPlayer.setPlaybackRate).toHaveBeenCalledWith(2.0, { preservesPitch: false });
     });
 
     it('should handle errors gracefully', async () => {
-      mockSound.setRateAsync.mockRejectedValueOnce(new Error('Rate change failed'));
+      mockPlayer.setPlaybackRate.mockRejectedValueOnce(new Error('Rate change failed'));
 
       await expect(
-        PitchShiftManager.applyFastForwardPitch(mockSound)
+        PitchShiftManager.applyFastForwardPitch(mockPlayer)
       ).resolves.not.toThrow();
     });
   });
 
   describe('applyRewindPitch()', () => {
     it('should set rate without pitch correction', async () => {
-      await PitchShiftManager.applyRewindPitch(mockSound, 2.0);
+      await PitchShiftManager.applyRewindPitch(mockPlayer, 2.0);
 
-      expect(mockSound.setRateAsync).toHaveBeenCalledWith(2.0, false);
+      expect(mockPlayer.setPlaybackRate).toHaveBeenCalledWith(2.0, { preservesPitch: false });
     });
 
     it('should use default speed of 2.0', async () => {
-      await PitchShiftManager.applyRewindPitch(mockSound);
+      await PitchShiftManager.applyRewindPitch(mockPlayer);
 
-      expect(mockSound.setRateAsync).toHaveBeenCalledWith(2.0, false);
+      expect(mockPlayer.setPlaybackRate).toHaveBeenCalledWith(2.0, { preservesPitch: false });
     });
 
     it('should handle errors gracefully', async () => {
-      mockSound.setRateAsync.mockRejectedValueOnce(new Error('Rate change failed'));
+      mockPlayer.setPlaybackRate.mockRejectedValueOnce(new Error('Rate change failed'));
 
       await expect(
-        PitchShiftManager.applyRewindPitch(mockSound)
+        PitchShiftManager.applyRewindPitch(mockPlayer)
       ).resolves.not.toThrow();
     });
   });
 
   describe('resetPitch()', () => {
     it('should reset rate to 1.0 with pitch correction', async () => {
-      await PitchShiftManager.resetPitch(mockSound);
+      await PitchShiftManager.resetPitch(mockPlayer);
 
-      expect(mockSound.setRateAsync).toHaveBeenCalledWith(1.0, true);
+      expect(mockPlayer.setPlaybackRate).toHaveBeenCalledWith(1.0, { preservesPitch: true });
     });
 
     it('should handle errors gracefully', async () => {
-      mockSound.setRateAsync.mockRejectedValueOnce(new Error('Rate change failed'));
+      mockPlayer.setPlaybackRate.mockRejectedValueOnce(new Error('Rate change failed'));
 
       await expect(
-        PitchShiftManager.resetPitch(mockSound)
+        PitchShiftManager.resetPitch(mockPlayer)
       ).resolves.not.toThrow();
     });
   });

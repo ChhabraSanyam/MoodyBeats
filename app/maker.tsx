@@ -96,7 +96,6 @@ interface DraggableTrackProps {
 function DraggableTrack({ track, index, side, onRemove, onMove }: DraggableTrackProps) {
   const handleMoveToOtherSide = async () => {
     const targetSide = side === 'A' ? 'B' : 'A';
-    console.log(`Arrow button clicked: Moving "${track.title}" from Side ${side} to Side ${targetSide}`);
     await triggerLightHaptic();
     
     // Directly call the move handler
@@ -203,7 +202,9 @@ export default function MixtapeCreatorScreen() {
     try {
       await mixtapeRepo.save(mixtape);
     } catch (error) {
-      console.error('Error saving mixtape:', error);
+      if (__DEV__) {
+        console.error('Error saving mixtape:', error);
+      }
       await triggerErrorHaptic();
       showToast('Failed to save mixtape', 'error');
     }
@@ -228,30 +229,36 @@ export default function MixtapeCreatorScreen() {
           resolve(Math.floor(audio.duration));
         });
         audio.addEventListener('error', () => {
-          console.error('Error loading audio metadata');
+          if (__DEV__) {
+            console.error('Error loading audio metadata');
+          }
           resolve(180); // Default to 3 minutes on error
         });
       });
     } else {
-      // Mobile: Use expo-av
+      // Mobile: Use expo-audio
       try {
-        const { Audio } = require('expo-av');
-        const { sound, status } = await Audio.Sound.createAsync(
-          { uri: url },
-          { shouldPlay: false }
-        );
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { AudioPlayer } = require('expo-audio');
+        const player = new AudioPlayer(url);
+        await player.load();
         
-        if (status.isLoaded && status.durationMillis) {
-          const duration = Math.floor(status.durationMillis / 1000);
-          await sound.unloadAsync(); // Clean up
+        const status = await player.getCurrentStatus();
+        if (status.isLoaded && status.duration) {
+          const duration = Math.floor(status.duration);
+          await player.remove(); // Clean up
           return duration;
         } else {
-          await sound.unloadAsync();
-          console.error('Could not load audio duration');
+          await player.remove();
+          if (__DEV__) {
+            console.error('Could not load audio duration');
+          }
           return 180; // Default to 3 minutes
         }
       } catch (error) {
-        console.error('Error loading audio on mobile:', error);
+        if (__DEV__) {
+          console.error('Error loading audio on mobile:', error);
+        }
         return 180; // Default to 3 minutes on error
       }
     }
@@ -280,7 +287,6 @@ export default function MixtapeCreatorScreen() {
           // Get actual audio duration
           setLoadingMessage('Reading audio duration...');
           const duration = await getAudioDuration(blobUrl);
-          console.log(`Audio duration: ${duration} seconds (${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')})`);
           
           // Check if adding this track would exceed the limit
           const currentDuration = calculateDuration([...sideA, ...sideB]);
@@ -310,7 +316,9 @@ export default function MixtapeCreatorScreen() {
           try {
             await audioRepo.saveAudioFile(newTrack.id, blobUrl);
           } catch (error) {
-            console.error(`Failed to save audio file:`, error);
+            if (__DEV__) {
+              console.error(`Failed to save audio file:`, error);
+            }
           }
 
           setSideA([...sideA, newTrack]);
@@ -374,14 +382,18 @@ export default function MixtapeCreatorScreen() {
       try {
         await audioRepo.saveAudioFile(newTrack.id, file.uri);
       } catch (error) {
-        console.error(`Failed to save audio file:`, error);
+        if (__DEV__) {
+          console.error(`Failed to save audio file:`, error);
+        }
       }
 
       setSideA([...sideA, newTrack]);
       await triggerSuccessHaptic();
       showToast(`Added "${newTrack.title}" (${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')})`, 'success');
     } catch (error) {
-      console.error('Error picking audio file:', error);
+      if (__DEV__) {
+        console.error('Error picking audio file:', error);
+      }
       await triggerErrorHaptic();
       showToast('Failed to upload audio file', 'error');
     } finally {
@@ -441,7 +453,9 @@ export default function MixtapeCreatorScreen() {
       await triggerSuccessHaptic();
       showToast(`Added "${newTrack.title}" (${Math.floor(duration / 60)}:${(duration % 60).toString().padStart(2, '0')})`, 'success');
     } catch (error) {
-      console.error('Error adding track from URL:', error);
+      if (__DEV__) {
+        console.error('Error adding track from URL:', error);
+      }
       await triggerErrorHaptic();
       showToast('Failed to load audio from URL', 'error');
     } finally {
@@ -458,18 +472,14 @@ export default function MixtapeCreatorScreen() {
   };
 
   const handleMoveTrack = (track: Track, fromSide: 'A' | 'B', fromIndex: number, toSide: 'A' | 'B') => {
-    console.log(`handleMoveTrack: Moving "${track.title}" from Side ${fromSide} (index ${fromIndex}) to Side ${toSide}`);
-    
     if (fromSide === 'A' && toSide === 'B') {
       // Remove from Side A and add to Side B using functional setState
       setSideA(prevSideA => {
         const newSideA = prevSideA.filter((_, i) => i !== fromIndex);
-        console.log(`Moving A->B: sideA ${prevSideA.length}->${newSideA.length}`);
         return newSideA;
       });
       setSideB(prevSideB => {
         const newSideB = [...prevSideB, track];
-        console.log(`Moving A->B: sideB ${prevSideB.length}->${newSideB.length}`);
         return newSideB;
       });
       triggerSuccessHaptic();
@@ -478,12 +488,10 @@ export default function MixtapeCreatorScreen() {
       // Remove from Side B and add to Side A using functional setState
       setSideB(prevSideB => {
         const newSideB = prevSideB.filter((_, i) => i !== fromIndex);
-        console.log(`Moving B->A: sideB ${prevSideB.length}->${newSideB.length}`);
         return newSideB;
       });
       setSideA(prevSideA => {
         const newSideA = [...prevSideA, track];
-        console.log(`Moving B->A: sideA ${prevSideA.length}->${newSideA.length}`);
         return newSideA;
       });
       triggerSuccessHaptic();
@@ -637,11 +645,11 @@ export default function MixtapeCreatorScreen() {
           <HoverableButton
             style={[
               styles.saveButton,
-              (sideA.length === 0 && sideB.length === 0) && styles.saveButtonDisabled
+              ...(sideA.length === 0 && sideB.length === 0 ? [styles.saveButtonDisabled] : [])
             ]}
             textStyle={[
               styles.saveButtonText,
-              (sideA.length === 0 && sideB.length === 0) && styles.saveButtonTextDisabled
+              ...(sideA.length === 0 && sideB.length === 0 ? [styles.saveButtonTextDisabled] : [])
             ]}
             onPress={async () => {
               if (sideA.length === 0 && sideB.length === 0) {
@@ -849,11 +857,18 @@ const styles = StyleSheet.create({
   },
   trackItemDragging: {
     opacity: 0.7,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.3)',
+      } as any,
+      default: {
+        elevation: 5,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.3,
+        shadowRadius: 4,
+      },
+    }),
   },
   dragHandle: {
     fontSize: 16,

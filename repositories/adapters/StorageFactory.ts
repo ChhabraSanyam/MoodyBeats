@@ -8,9 +8,9 @@ import { MixtapeRepository } from '../MixtapeRepository';
 import { ThemeRepository } from '../ThemeRepository';
 import { detectPlatform } from '../utils/platform';
 import {
-    IndexedDBAudioRepository,
-    IndexedDBMixtapeRepository,
-    IndexedDBThemeRepository,
+  IndexedDBAudioRepository,
+  IndexedDBMixtapeRepository,
+  IndexedDBThemeRepository,
 } from './IndexedDBStorageAdapter';
 
 /**

@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { ActivityIndicator, Modal, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, Platform, StyleSheet, Text, View } from 'react-native';
 
 export interface LoadingOverlayProps {
   visible: boolean;
@@ -50,11 +50,18 @@ const styles = StyleSheet.create({
     padding: 32,
     alignItems: 'center',
     minWidth: 200,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
+      } as any,
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
+      },
+    }),
   },
   message: {
     fontSize: 16,

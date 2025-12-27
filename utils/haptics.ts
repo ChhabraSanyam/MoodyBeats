@@ -16,7 +16,9 @@ export const triggerLightHaptic = async () => {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch (error) {
-      console.warn('Haptic feedback failed:', error);
+      if (__DEV__) {
+        console.warn('Haptic feedback failed:', error);
+      }
     }
   }
 };
@@ -30,7 +32,9 @@ export const triggerMediumHaptic = async () => {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (error) {
-      console.warn('Haptic feedback failed:', error);
+      if (__DEV__) {
+        console.warn('Haptic feedback failed:', error);
+      }
     }
   }
 };
@@ -44,7 +48,9 @@ export const triggerHeavyHaptic = async () => {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
     } catch (error) {
-      console.warn('Haptic feedback failed:', error);
+      if (__DEV__) {
+        console.warn('Haptic feedback failed:', error);
+      }
     }
   }
 };
@@ -58,7 +64,9 @@ export const triggerSuccessHaptic = async () => {
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     } catch (error) {
-      console.warn('Haptic feedback failed:', error);
+      if (__DEV__) {
+        console.warn('Haptic feedback failed:', error);
+      }
     }
   }
 };
@@ -72,7 +80,9 @@ export const triggerWarningHaptic = async () => {
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
     } catch (error) {
-      console.warn('Haptic feedback failed:', error);
+      if (__DEV__) {
+        console.warn('Haptic feedback failed:', error);
+      }
     }
   }
 };
@@ -86,7 +96,9 @@ export const triggerErrorHaptic = async () => {
     try {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } catch (error) {
-      console.warn('Haptic feedback failed:', error);
+      if (__DEV__) {
+        console.warn('Haptic feedback failed:', error);
+      }
     }
   }
 };
@@ -100,7 +112,9 @@ export const triggerSelectionHaptic = async () => {
     try {
       await Haptics.selectionAsync();
     } catch (error) {
-      console.warn('Haptic feedback failed:', error);
+      if (__DEV__) {
+        console.warn('Haptic feedback failed:', error);
+      }
     }
   }
 };

@@ -32,22 +32,22 @@ const Button: React.FC<ButtonProps> = ({
 }) => {
   const [isHovered, setIsHovered] = useState(false);
 
-  const buttonStyle: ViewStyle[] = [
+  const buttonStyle = [
     styles.button,
     styles[`${size}Button`],
     styles[`${variant}Button`],
-    fullWidth && styles.fullWidth,
-    disabled && styles.disabled,
-    isHovered && !disabled && styles[`${variant}ButtonHover`],
+    fullWidth ? styles.fullWidth : null,
+    disabled ? styles.disabled : null,
+    isHovered && !disabled ? styles[`${variant}ButtonHover`] : null,
     style,
-  ];
+  ].filter(Boolean) as ViewStyle[];
 
   const textStyle = [
     styles.text,
     styles[`${size}Text`],
     styles[`${variant}Text`],
-    disabled && styles.disabledText,
-  ];
+    disabled ? styles.disabledText : null,
+  ].filter(Boolean);
 
   return (
     <TouchableOpacity

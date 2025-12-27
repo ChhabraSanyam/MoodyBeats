@@ -8,7 +8,6 @@ import {
   Animated,
   Platform,
   StyleSheet,
-  Text,
   View,
 } from 'react-native';
 import { TapeTheme } from '../models';
@@ -284,7 +283,7 @@ const styles = StyleSheet.create({
         height: 300,
         padding: 45,
         boxShadow: '0 20px 60px rgba(0, 0, 0, 0.5)',
-      },
+      } as any,
       default: {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 8 },

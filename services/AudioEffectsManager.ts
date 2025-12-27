@@ -4,7 +4,9 @@
  * Requirements: 10.1, 10.2, 10.3, 10.4
  */
 
-import { Audio, AVPlaybackSource } from 'expo-av';
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import type { AudioPlayer } from 'expo-audio/build/AudioModule.types';
+
 
 export type SoundEffectType = 
   | 'play-click'
@@ -17,7 +19,7 @@ export type SoundEffectType =
  * AudioEffectsManager handles loading and playing tape deck sound effects
  */
 export class AudioEffectsManager {
-  private soundEffects: Map<SoundEffectType, Audio.Sound> = new Map();
+  private soundEffects: Map<SoundEffectType, AudioPlayer> = new Map();
   private isInitialized: boolean = false;
 
   /**
@@ -30,10 +32,10 @@ export class AudioEffectsManager {
 
     try {
       // Configure audio mode for sound effects
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: false,
-        shouldDuckAndroid: true,
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        shouldPlayInBackground: false,
+        interruptionMode: 'duckOthers',
       });
 
       // Preload all sound effects
@@ -45,7 +47,9 @@ export class AudioEffectsManager {
 
       this.isInitialized = true;
     } catch (error) {
-      console.error('Error initializing audio effects:', error);
+      if (__DEV__) {
+        console.error('Error initializing audio effects:', error);
+      }
       // Continue without sound effects if loading fails
     }
   }
@@ -53,16 +57,18 @@ export class AudioEffectsManager {
   /**
    * Load a single sound effect
    */
-  private async loadSoundEffect(type: SoundEffectType, source: AVPlaybackSource): Promise<void> {
+  private async loadSoundEffect(type: SoundEffectType, source: any): Promise<void> {
     try {
-      const { sound } = await Audio.Sound.createAsync(source, {
-        shouldPlay: false,
-        volume: 0.7,
-      });
+      const player = createAudioPlayer(source, { updateInterval: 500, keepAudioSessionActive: false });
       
-      this.soundEffects.set(type, sound);
+      // Wait a moment for the player to initialize
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      this.soundEffects.set(type, player);
     } catch (error) {
-      console.error(`Error loading sound effect ${type}:`, error);
+      if (__DEV__) {
+        console.error(`Error loading sound effect ${type}:`, error);
+      }
       // Continue without this specific sound effect
     }
   }
@@ -76,17 +82,25 @@ export class AudioEffectsManager {
       await this.initialize();
     }
 
-    const sound = this.soundEffects.get(type);
-    if (!sound) {
+    const player = this.soundEffects.get(type);
+    if (!player) {
       return;
     }
 
     try {
-      // Rewind to start and play
-      await sound.setPositionAsync(0);
-      await sound.playAsync();
+      // Check if player is loaded before trying to play
+      if (!player.currentStatus?.isLoaded) {
+        return;
+      }
+
+      // Seek to start and play
+      await player.seekTo(0);
+      player.play();
     } catch (error) {
-      console.error(`Error playing sound effect ${type}:`, error);
+      // Silently handle audio errors in production
+      if (__DEV__) {
+        console.warn(`Error playing sound effect ${type}:`, error);
+      }
     }
   }
 
@@ -129,11 +143,13 @@ export class AudioEffectsManager {
    * Clean up all sound effects
    */
   async cleanup(): Promise<void> {
-    for (const [type, sound] of this.soundEffects.entries()) {
+    for (const [type, player] of Array.from(this.soundEffects.entries())) {
       try {
-        await sound.unloadAsync();
+        player.remove();
       } catch (error) {
-        console.error(`Error unloading sound effect ${type}:`, error);
+        if (__DEV__) {
+          console.error(`Error unloading sound effect ${type}:`, error);
+        }
       }
     }
     
@@ -151,16 +167,19 @@ export class PitchShiftManager {
    * Apply pitch shift effect for fast forward
    * Requirements: 10.2
    * 
-   * Note: Expo AV's setRateAsync with shouldCorrectPitch=false will
+   * Note: expo-audio's setPlaybackRate with shouldCorrectPitch=false will
    * naturally increase pitch when speed increases, creating the
    * authentic tape fast-forward sound.
    */
-  static async applyFastForwardPitch(sound: Audio.Sound, speed: number = 2.0): Promise<void> {
+  static async applyFastForwardPitch(player: AudioPlayer, speed: number = 2.0): Promise<void> {
     try {
       // Set rate without pitch correction to get the chipmunk effect
-      await sound.setRateAsync(speed, false);
+      player.setPlaybackRate(speed, 'low');
+      player.shouldCorrectPitch = false;
     } catch (error) {
-      console.error('Error applying fast forward pitch:', error);
+      if (__DEV__) {
+        console.error('Error applying fast forward pitch:', error);
+      }
     }
   }
 
@@ -169,29 +188,35 @@ export class PitchShiftManager {
    * Requirements: 10.3
    * 
    * Note: For rewind, we simulate the effect by playing backwards
-   * with pitch shift. Since Expo AV doesn't support true reverse playback,
+   * with pitch shift. Since expo-audio doesn't support true reverse playback,
    * we achieve the rewind effect through rapid seeking backwards in
    * the PlaybackEngine, and this method prepares the audio characteristics.
    */
-  static async applyRewindPitch(sound: Audio.Sound, speed: number = 2.0): Promise<void> {
+  static async applyRewindPitch(player: AudioPlayer, speed: number = 2.0): Promise<void> {
     try {
       // Set rate without pitch correction for the rewind effect
       // The actual backwards motion is handled by PlaybackEngine's seeking
-      await sound.setRateAsync(speed, false);
+      player.setPlaybackRate(speed, 'low');
+      player.shouldCorrectPitch = false;
     } catch (error) {
-      console.error('Error applying rewind pitch:', error);
+      if (__DEV__) {
+        console.error('Error applying rewind pitch:', error);
+      }
     }
   }
 
   /**
    * Reset pitch to normal playback
    */
-  static async resetPitch(sound: Audio.Sound): Promise<void> {
+  static async resetPitch(player: AudioPlayer): Promise<void> {
     try {
       // Return to normal rate with pitch correction
-      await sound.setRateAsync(1.0, true);
+      player.setPlaybackRate(1.0, 'medium');
+      player.shouldCorrectPitch = true;
     } catch (error) {
-      console.error('Error resetting pitch:', error);
+      if (__DEV__) {
+        console.error('Error resetting pitch:', error);
+      }
     }
   }
 }

@@ -2,7 +2,7 @@ import { useFonts } from 'expo-font';
 import { useRouter } from "expo-router";
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import { Button } from "../components";
 import { triggerLightHaptic } from "../utils/haptics";
 
@@ -21,13 +21,15 @@ export default function Index() {
     async function prepare() {
       try {
         if (fontsLoaded || fontError) {
-          if (fontError) {
+          if (fontError && __DEV__) {
             console.warn('Font loading error on index:', fontError);
           }
           await SplashScreen.hideAsync();
         }
       } catch (e) {
-        console.warn('Error hiding splash screen on index:', e);
+        if (__DEV__) {
+          console.warn('Error hiding splash screen on index:', e);
+        }
       }
     }
     prepare();
@@ -39,7 +41,9 @@ export default function Index() {
       try {
         await SplashScreen.hideAsync();
       } catch (e) {
-        console.warn('Timeout: Error hiding splash screen on index:', e);
+        if (__DEV__) {
+          console.warn('Timeout: Error hiding splash screen on index:', e);
+        }
       }
     }, 3000);
 
@@ -107,7 +111,6 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 48,
-    fontFamily: Platform.OS === 'web' ? 'Staatliches' : 'Staatliches',
     fontFamily: 'Staatliches',
     color: '#ffffff',
     marginBottom: 8,

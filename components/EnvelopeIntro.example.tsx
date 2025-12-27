@@ -19,7 +19,6 @@ const EnvelopeIntroExample: React.FC = () => {
   const exampleNote = 'Hey! I made this mixtape for you. Hope you enjoy these tracks! 🎵';
 
   const handleComplete = () => {
-    console.log('Envelope intro animation completed!');
     setShowIntro(false);
     // Navigate to player screen or show mixtape content
   };

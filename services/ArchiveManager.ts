@@ -640,7 +640,9 @@ export class ArchiveManager {
             savedAudioFiles.set(trackId, audioFile.uri);
           }
         } catch (error) {
-          console.warn(`Failed to save audio file for track ${trackId}:`, error);
+          if (__DEV__) {
+            console.warn(`Failed to save audio file for track ${trackId}:`, error);
+          }
           // Continue with import even if some audio files fail
         }
       }
@@ -655,7 +657,9 @@ export class ArchiveManager {
           };
         } else if (track.source.uri?.startsWith('archive://')) {
           // Archive reference but no audio file found - this is an error state
-          console.warn(`Track ${track.id} has archive reference but no audio file was found in archive`);
+          if (__DEV__) {
+            console.warn(`Track ${track.id} has archive reference but no audio file was found in archive`);
+          }
         }
         // For non-archive tracks (URL sources), keep the original source
       };
@@ -668,7 +672,9 @@ export class ArchiveManager {
         try {
           await themeRepo.saveCustomAsset(assetId, assetBlob);
         } catch (error) {
-          console.warn(`Failed to save theme asset ${assetId}:`, error);
+          if (__DEV__) {
+            console.warn(`Failed to save theme asset ${assetId}:`, error);
+          }
           // Continue with import even if some theme assets fail
         }
       }

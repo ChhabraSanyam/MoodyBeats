@@ -17,17 +17,28 @@ jest.mock('../GlitchController', () => ({
   })),
 }));
 
-// Mock Expo AV
-jest.mock('expo-av', () => ({
-  Audio: {
-    setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
-    Sound: {
-      createAsync: jest.fn(),
-    },
-  },
+// Mock Expo Audio
+const mockAudioPlayer = jest.fn().mockImplementation(() => ({
+  load: jest.fn().mockResolvedValue(undefined),
+  play: jest.fn().mockResolvedValue(undefined),
+  pause: jest.fn().mockResolvedValue(undefined),
+  seekTo: jest.fn().mockResolvedValue(undefined),
+  remove: jest.fn().mockResolvedValue(undefined),
+  getCurrentStatus: jest.fn().mockResolvedValue({
+    isLoaded: true,
+    duration: 180,
+    currentTime: 0,
+    isPlaying: false,
+  }),
+  addListener: jest.fn(),
+  setPlaybackRate: jest.fn().mockResolvedValue(undefined),
 }));
 
-import { Audio } from 'expo-av';
+jest.mock('expo-audio', () => ({
+  createAudioPlayer: mockAudioPlayer,
+  setAudioModeAsync: jest.fn().mockResolvedValue(undefined),
+}));
+
 import { Mixtape } from '../../models';
 import { PlaybackEngine } from '../PlaybackEngine';
 
@@ -42,28 +53,23 @@ describe('PlaybackEngine', () => {
 
     // Create mock sound object
     mockSound = {
-      playAsync: jest.fn().mockResolvedValue(undefined),
-      pauseAsync: jest.fn().mockResolvedValue(undefined),
-      unloadAsync: jest.fn().mockResolvedValue(undefined),
-      setPositionAsync: jest.fn().mockResolvedValue(undefined),
-      getStatusAsync: jest.fn().mockResolvedValue({
+      load: jest.fn().mockResolvedValue(undefined),
+      play: jest.fn().mockResolvedValue(undefined),
+      pause: jest.fn().mockResolvedValue(undefined),
+      seekTo: jest.fn().mockResolvedValue(undefined),
+      remove: jest.fn().mockResolvedValue(undefined),
+      getCurrentStatus: jest.fn().mockResolvedValue({
         isLoaded: true,
-        positionMillis: 0,
-        durationMillis: 180000,
+        duration: 180,
+        currentTime: 0,
         isPlaying: false,
       }),
+      addListener: jest.fn(),
+      setPlaybackRate: jest.fn().mockResolvedValue(undefined),
     };
 
-    // Mock Sound.createAsync to return our mock sound
-    (Audio.Sound.createAsync as jest.Mock).mockResolvedValue({
-      sound: mockSound,
-      status: {
-        isLoaded: true,
-        positionMillis: 0,
-        durationMillis: 180000,
-        isPlaying: false,
-      },
-    });
+    // Mock createAudioPlayer to return our mock sound
+    mockAudioPlayer.mockImplementation(() => mockSound);
 
     // Create test mixtape
     mockMixtape = {
@@ -131,7 +137,7 @@ describe('PlaybackEngine', () => {
       expect(state.mixtapeId).toBe('test-mixtape-1');
       expect(state.currentSide).toBe('A');
       expect(state.currentTrackIndex).toBe(0);
-      expect(Audio.Sound.createAsync).toHaveBeenCalledWith(
+      expect(mockAudioPlayer).toHaveBeenCalledWith(
         { uri: 'file://track1.mp3' },
         { shouldPlay: false },
         expect.any(Function)
@@ -158,7 +164,7 @@ describe('PlaybackEngine', () => {
       
       const state = engine.getCurrentState();
       expect(state.mixtapeId).toBe('test-mixtape-1');
-      expect(Audio.Sound.createAsync).not.toHaveBeenCalled();
+      expect(mockAudioPlayer).not.toHaveBeenCalled();
     });
   });
 
@@ -282,7 +288,7 @@ describe('PlaybackEngine', () => {
       expect(state.currentSide).toBe('B');
       expect(state.currentTrackIndex).toBe(0);
       expect(state.position).toBe(0);
-      expect(Audio.Sound.createAsync).toHaveBeenCalledWith(
+      expect(mockAudioPlayer).toHaveBeenCalledWith(
         { uri: 'file://track3.mp3' },
         { shouldPlay: false },
         expect.any(Function)
@@ -671,7 +677,7 @@ describe('PlaybackEngine', () => {
 
   describe('Edge Cases', () => {
     it('should handle track loading errors', async () => {
-      (Audio.Sound.createAsync as jest.Mock).mockRejectedValueOnce(
+      (mockAudioPlayer as jest.Mock).mockRejectedValueOnce(
         new Error('Failed to load audio')
       );
       

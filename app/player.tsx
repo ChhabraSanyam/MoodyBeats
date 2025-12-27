@@ -4,7 +4,7 @@
  */
 
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Animated,
@@ -53,7 +53,7 @@ export default function PlayerScreen() {
   const tapePositionY = useRef(new Animated.Value(0)).current;
   const playerPositionY = useRef(new Animated.Value(0)).current; // Will be positioned at 30% from bottom
   const playerOpacity = useRef(new Animated.Value(0)).current; // For fade in
-  const tapeDepth = useRef(new Animated.Value(0)).current;
+  // const tapeDepth = useRef(new Animated.Value(0)).current; // Unused
   const tapeFlipRotation = useRef(new Animated.Value(0)).current; // For tape flip animation
   const flipButtonOpacity = useRef(new Animated.Value(1)).current; // For flip button visibility
 
@@ -110,7 +110,9 @@ export default function PlayerScreen() {
       if (playbackEngine) {
         // Properly cleanup audio resources to prevent thread errors
         playbackEngine.cleanup().catch((error) => {
-          console.error('Error cleaning up playback engine:', error);
+          if (__DEV__) {
+            console.error('Error cleaning up playback engine:', error);
+          }
         });
       }
     };
@@ -130,7 +132,9 @@ export default function PlayerScreen() {
       setSelectedMixtape(allMixtapes[0]);
       setIsLoading(false);
     } catch (error) {
-      console.error('Error loading mixtapes:', error);
+      if (__DEV__) {
+        console.error('Error loading mixtapes:', error);
+      }
       await triggerErrorHaptic();
       showToast('Failed to load mixtapes', 'error');
       navigateBack();
@@ -155,7 +159,9 @@ export default function PlayerScreen() {
       setPlaybackState(playbackEngine.getCurrentState());
       setIsLoading(false);
     } catch (error) {
-      console.error('Error loading mixtape:', error);
+      if (__DEV__) {
+        console.error('Error loading mixtape:', error);
+      }
       await triggerErrorHaptic();
       showToast('Failed to load mixtape', 'error');
       navigateBack();
@@ -242,7 +248,6 @@ export default function PlayerScreen() {
   const handleSelectMixtape = async () => {
     if (!selectedMixtape || isAnimating) return;
     
-    console.log('Starting tape selection animation');
     setIsAnimating(true);
     setMode('dragging');
     
@@ -271,7 +276,6 @@ export default function PlayerScreen() {
         useNativeDriver: true,
       }),
     ]).start(() => {
-      console.log('Player faded in and tape moved to top, ready for dragging');
       setIsAnimating(false);
     });
   };
@@ -285,16 +289,16 @@ export default function PlayerScreen() {
     setInitialTapeY(-200); // Updated to match new tape position
   };
 
-  const handleMouseMove = (e: any) => {
+  const handleMouseMove = useCallback((e: any) => {
     if (Platform.OS !== 'web' || !isDragging || mode !== 'dragging') return;
     
     const currentY = e.clientY || e.nativeEvent.pageY;
     const dragY = Math.max(0, currentY - dragStartY);
     
     tapePositionY.setValue(initialTapeY + dragY);
-  };
+  }, [isDragging, mode, dragStartY, initialTapeY, tapePositionY]);
 
-  const handleMouseUp = async (e: any) => {
+  const handleMouseUp = useCallback(async (e: any) => {
     if (Platform.OS !== 'web' || !isDragging || mode !== 'dragging') return;
     
     setIsDragging(false);
@@ -325,7 +329,7 @@ export default function PlayerScreen() {
         useNativeDriver: true,
       }).start(() => setIsAnimating(false));
     }
-  };
+  }, [isDragging, mode, dragStartY, flipButtonOpacity, tapePositionY, setMode, setIsAnimating]);
 
   // Mobile pan responder for touch gestures
   const panResponder = useRef(
@@ -388,7 +392,7 @@ export default function PlayerScreen() {
         document.removeEventListener('mouseup', handleGlobalMouseUp);
       };
     }
-  }, [isDragging, mode, dragStartY, initialTapeY]);
+  }, [isDragging, mode, dragStartY, initialTapeY, handleMouseMove, handleMouseUp]);
 
   /**
    * Playback control handlers
@@ -398,7 +402,9 @@ export default function PlayerScreen() {
       await triggerMediumHaptic();
       await playbackEngine.play();
     } catch (error) {
-      console.error('Error playing:', error);
+      if (__DEV__) {
+        console.error('Error playing:', error);
+      }
       await triggerErrorHaptic();
       showToast('Failed to start playback', 'error');
     }
@@ -409,7 +415,9 @@ export default function PlayerScreen() {
       await triggerMediumHaptic();
       playbackEngine.pause();
     } catch (error) {
-      console.error('Error pausing:', error);
+      if (__DEV__) {
+        console.error('Error pausing:', error);
+      }
       await triggerErrorHaptic();
       showToast('Failed to pause playback', 'error');
     }
@@ -420,7 +428,9 @@ export default function PlayerScreen() {
       await triggerLightHaptic();
       playbackEngine.startFastForward();
     } catch (error) {
-      console.error('Error fast forwarding:', error);
+      if (__DEV__) {
+        console.error('Error fast forwarding:', error);
+      }
       await triggerErrorHaptic();
       showToast('Failed to fast forward', 'error');
     }
@@ -431,7 +441,9 @@ export default function PlayerScreen() {
       await triggerLightHaptic();
       playbackEngine.stopFastForward();
     } catch (error) {
-      console.error('Error stopping fast forward:', error);
+      if (__DEV__) {
+        console.error('Error stopping fast forward:', error);
+      }
     }
   };
 
@@ -440,7 +452,9 @@ export default function PlayerScreen() {
       await triggerLightHaptic();
       playbackEngine.startRewind();
     } catch (error) {
-      console.error('Error rewinding:', error);
+      if (__DEV__) {
+        console.error('Error rewinding:', error);
+      }
       await triggerErrorHaptic();
       showToast('Failed to rewind', 'error');
     }
@@ -451,18 +465,9 @@ export default function PlayerScreen() {
       await triggerLightHaptic();
       playbackEngine.stopRewind();
     } catch (error) {
-      console.error('Error stopping rewind:', error);
-    }
-  };
-
-  const handleFlipSide = async () => {
-    try {
-      await triggerMediumHaptic();
-      await playbackEngine.flipSide();
-    } catch (error) {
-      console.error('Error flipping side:', error);
-      await triggerErrorHaptic();
-      showToast('Failed to flip tape side', 'error');
+      if (__DEV__) {
+        console.error('Error stopping rewind:', error);
+      }
     }
   };
 
@@ -499,15 +504,15 @@ export default function PlayerScreen() {
       
       // Flip the side in the playback engine (works in both dragging and inserted modes)
       if (playbackEngine && selectedMixtape) {
-        console.log('Before flip - Current side:', playbackEngine.getCurrentState().currentSide);
         await playbackEngine.flipSide();
         const newState = playbackEngine.getCurrentState();
-        console.log('After flip - Current side:', newState.currentSide);
         // Update playback state to reflect the side change
         setPlaybackState(newState);
       }
     } catch (error) {
-      console.error('Error flipping tape:', error);
+      if (__DEV__) {
+        console.error('Error flipping tape:', error);
+      }
       await triggerErrorHaptic();
       showToast('Failed to flip tape', 'error');
       setIsAnimating(false);
@@ -558,7 +563,9 @@ export default function PlayerScreen() {
         setIsAnimating(false);
       });
     } catch (error) {
-      console.error('Error ejecting tape:', error);
+      if (__DEV__) {
+        console.error('Error ejecting tape:', error);
+      }
       await triggerErrorHaptic();
       showToast('Failed to eject tape', 'error');
       setIsAnimating(false);

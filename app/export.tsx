@@ -13,15 +13,15 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useToast } from '../components';
 import EnvelopeCustomizer from '../components/EnvelopeCustomizer';
@@ -29,9 +29,9 @@ import { EnvelopeCustomization, Mixtape } from '../models';
 import { createAudioRepository, createMixtapeRepository } from '../repositories/adapters/StorageFactory';
 import { ArchiveManager } from '../services/ArchiveManager';
 import {
-    triggerErrorHaptic,
-    triggerLightHaptic,
-    triggerSuccessHaptic,
+  triggerErrorHaptic,
+  triggerLightHaptic,
+  triggerSuccessHaptic,
 } from '../utils/haptics';
 
 type ExportState = 'idle' | 'exporting' | 'success' | 'error';
@@ -98,7 +98,9 @@ export default function MixtapeExportScreen() {
       setNote(loadedMixtape.note || '');
       setEnvelope(loadedMixtape.envelope);
     } catch (error) {
-      console.error('Error loading mixtape:', error);
+      if (__DEV__) {
+        console.error('Error loading mixtape:', error);
+      }
       await triggerErrorHaptic();
       showToast('Failed to load mixtape', 'error');
       navigateBack();
@@ -124,7 +126,9 @@ export default function MixtapeExportScreen() {
       setMixtape(updatedMixtape);
       return updatedMixtape;
     } catch (error) {
-      console.error('Error saving mixtape metadata:', error);
+      if (__DEV__) {
+        console.error('Error saving mixtape metadata:', error);
+      }
       throw error;
     }
   };
@@ -167,7 +171,9 @@ export default function MixtapeExportScreen() {
           audioFiles.set(track.id, blob);
         }
       } catch (error) {
-        console.warn(`Failed to collect audio for track ${track.id}:`, error);
+        if (__DEV__) {
+          console.warn(`Failed to collect audio for track ${track.id}:`, error);
+        }
         // Continue with other tracks even if one fails
       }
     }
@@ -276,7 +282,9 @@ export default function MixtapeExportScreen() {
         }, 1500);
       }
     } catch (error) {
-      console.error('Error exporting mixtape:', error);
+      if (__DEV__) {
+        console.error('Error exporting mixtape:', error);
+      }
       await triggerErrorHaptic();
       setExportState('error');
       setErrorMessage('Failed to export mixtape. Please try again.');
@@ -351,7 +359,9 @@ export default function MixtapeExportScreen() {
       await triggerSuccessHaptic();
       showToast('Mixtape uploaded successfully!', 'success');
     } catch (error) {
-      console.error('Error uploading mixtape:', error);
+      if (__DEV__) {
+        console.error('Error uploading mixtape:', error);
+      }
       await triggerErrorHaptic();
       setExportState('error');
       // Requirements: 16.5 - Simple error message for network failures

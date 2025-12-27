@@ -3,7 +3,7 @@
  * Animated sequence: Envelope → Note Paper → Tape Cassette
  */
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Platform,
@@ -130,8 +130,6 @@ export default function EnvelopeOpeningAnimation({
 }: EnvelopeOpeningAnimationProps) {
   const [stage, setStage] = useState<'envelope' | 'note' | 'tape'>('envelope');
   
-  console.log('EnvelopeOpeningAnimation props:', { signature, sigil, note });
-  
   // Animation values
   const envelopeOpacity = useRef(new Animated.Value(0)).current;
   const envelopeScale = useRef(new Animated.Value(0.8)).current;
@@ -149,11 +147,7 @@ export default function EnvelopeOpeningAnimation({
   const tiltXValue = useRef(0);
   const tiltYValue = useRef(0);
 
-  useEffect(() => {
-    runAnimationSequence();
-  }, []);
-
-  const runAnimationSequence = async () => {
+  const runAnimationSequence = useCallback(async () => {
     // Stage 1: Envelope appears
     await animateEnvelopeIn();
     await delay(1500);
@@ -170,7 +164,12 @@ export default function EnvelopeOpeningAnimation({
     
     // Complete
     onComplete();
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onComplete, setStage]);
+
+  useEffect(() => {
+    runAnimationSequence();
+  }, [runAnimationSequence]);
 
   const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -316,35 +315,27 @@ export default function EnvelopeOpeningAnimation({
   const getPresetId = (): string | null => {
     // First check if texture field has the preset ID (new way)
     if (tapeTheme.texture) {
-      console.log('EnvelopeOpeningAnimation - Using texture field:', tapeTheme.texture);
       return tapeTheme.texture;
     }
     
     // If pattern exists but no texture, it's a color-only theme
     if (tapeTheme.pattern && !tapeTheme.texture) {
-      console.log('EnvelopeOpeningAnimation - Color-only theme detected, no preset');
       return null;
     }
     
     // Fallback to preset-based detection for backwards compatibility
     const preset = tapeTheme.preset;
     
-    console.log('EnvelopeOpeningAnimation - Theme data (fallback):', { preset, fullTheme: tapeTheme });
-    
     if (preset === 'vhs-static-grey') {
-      console.log('Detected preset: love');
       return 'love';
     }
     if (preset === 'ghostly-green') {
-      console.log('Detected preset: galaxy');
       return 'galaxy';
     }
     if (preset === 'pumpkin-orange') {
-      console.log('Detected preset: retro');
       return 'retro';
     }
     
-    console.log('No preset detected');
     return null;
   };
 
@@ -366,8 +357,6 @@ export default function EnvelopeOpeningAnimation({
 
   const tapeWidth = Platform.OS === 'web' ? 480 : 320;
   const tapeHeight = Platform.OS === 'web' ? 300 : 200;
-
-  console.log('Final presetId:', presetId, 'shellColor:', shellColor);
 
   return (
     <View style={styles.container}>

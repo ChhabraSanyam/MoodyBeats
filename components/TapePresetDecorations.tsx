@@ -323,7 +323,12 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     borderRadius: 12,
-    pointerEvents: 'none',
+    ...Platform.select({
+      web: {
+        pointerEvents: 'none',
+      } as any,
+      default: {},
+    }),
   },
 });
 

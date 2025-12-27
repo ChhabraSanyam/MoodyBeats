@@ -9,8 +9,8 @@ import { AudioRepository } from '../AudioRepository';
 import { MixtapeRepository } from '../MixtapeRepository';
 import { ThemeRepository } from '../ThemeRepository';
 import {
-    getFileExtension,
-    validateAudioSource as validateAudioSourceUtil,
+  getFileExtension,
+  validateAudioSource as validateAudioSourceUtil,
 } from '../utils/audioValidation';
 
 // Base directories
@@ -127,7 +127,9 @@ export class FileSystemAudioRepository implements AudioRepository {
       await sourceFile.copy(destFile);
       return destFile.uri;
     } catch (error) {
-      console.error(`Failed to copy audio file:`, error);
+      if (__DEV__) {
+        console.error(`Failed to copy audio file:`, error);
+      }
       throw error;
     }
   }

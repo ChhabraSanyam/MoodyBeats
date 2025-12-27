@@ -56,7 +56,9 @@ export class BackendClient {
         return response;
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
-        console.warn(`Upload attempt ${attempt + 1} failed:`, lastError.message);
+        if (__DEV__) {
+          console.warn(`Upload attempt ${attempt + 1} failed:`, lastError.message);
+        }
         
         // Don't retry on client errors (4xx)
         if (err instanceof Error && err.message.includes('4')) {
@@ -174,7 +176,9 @@ export class BackendClient {
         return blob;
       } catch (err) {
         lastError = err instanceof Error ? err : new Error(String(err));
-        console.warn(`Download attempt ${attempt + 1} failed:`, lastError.message);
+        if (__DEV__) {
+          console.warn(`Download attempt ${attempt + 1} failed:`, lastError.message);
+        }
         
         // Don't retry on client errors (4xx)
         if (err instanceof Error && err.message.includes('404')) {

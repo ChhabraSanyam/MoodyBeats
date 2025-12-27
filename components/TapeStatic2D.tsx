@@ -5,9 +5,9 @@
 
 import React from 'react';
 import {
-  Platform,
-  StyleSheet,
-  View,
+    Platform,
+    StyleSheet,
+    View,
 } from 'react-native';
 import { TapeTheme } from '../models';
 import TapePresetDecorations from './TapePresetDecorations';
@@ -18,8 +18,6 @@ interface TapeStatic2DProps {
 }
 
 export default function TapeStatic2D({ theme, title }: TapeStatic2DProps) {
-  console.log('TapeStatic2D theme:', theme);
-  
   // Get preset ID from theme
   const getPresetId = (): string | null => {
     // If texture field exists, it's a preset
@@ -48,7 +46,6 @@ export default function TapeStatic2D({ theme, title }: TapeStatic2DProps) {
   };
 
   const presetId = getPresetId();
-  console.log('TapeStatic2D presetId:', presetId);
 
   // Get shell color
   const shellColor = theme.pattern || (() => {
@@ -62,7 +59,6 @@ export default function TapeStatic2D({ theme, title }: TapeStatic2DProps) {
         return '#F5F5DC';
     }
   })();
-  console.log('TapeStatic2D shellColor:', shellColor);
 
   // Smaller dimensions for draggable tape
   const tapeWidth = Platform.OS === 'web' ? 320 : (Platform.OS === 'android' ? 200 : 240);

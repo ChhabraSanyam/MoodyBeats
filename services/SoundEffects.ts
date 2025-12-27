@@ -3,11 +3,13 @@
  * Handles loading and playing sound effects for UI interactions
  */
 
-import { Audio } from 'expo-av';
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import type { AudioPlayer } from 'expo-audio/build/AudioModule.types';
+
 
 export class SoundEffects {
   private static instance: SoundEffects;
-  private sounds: Map<string, Audio.Sound> = new Map();
+  private sounds: Map<string, AudioPlayer> = new Map();
   private isInitialized = false;
 
   private constructor() {}
@@ -24,22 +26,18 @@ export class SoundEffects {
    */
   async initialize(): Promise<void> {
     if (this.isInitialized) {
-      console.log('SoundEffects already initialized');
       return;
     }
 
     try {
-      console.log('Initializing SoundEffects...');
-      
       // Configure audio mode for sound effects
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: false,
-        shouldDuckAndroid: true,
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        shouldPlayInBackground: false,
+        interruptionMode: 'duckOthers',
       });
 
       // Preload FF error sounds
-      console.log('Loading FF error sounds...');
       await this.loadSound('ff-error-1', require('../assets/sounds/ff-error-1.mp3'));
       await this.loadSound('ff-error-2', require('../assets/sounds/ff-error-2.mp3'));
       await this.loadSound('ff-error-3', require('../assets/sounds/ff-error-3.mp3'));
@@ -52,9 +50,10 @@ export class SoundEffects {
       await this.loadSound('rewind-error', require('../assets/sounds/rewind-error.mp3'));
 
       this.isInitialized = true;
-      console.log('SoundEffects initialized successfully. Loaded sounds:', Array.from(this.sounds.keys()));
     } catch (error) {
-      console.error('Error initializing sound effects:', error);
+      if (__DEV__) {
+        console.error('Error initializing sound effects:', error);
+      }
     }
   }
 
@@ -63,37 +62,56 @@ export class SoundEffects {
    */
   private async loadSound(key: string, source: any): Promise<void> {
     try {
-      const { sound } = await Audio.Sound.createAsync(source, {
-        shouldPlay: false,
-        volume: 1.0,
-      });
-      this.sounds.set(key, sound);
+      // Create audio player with proper error handling
+      const player = createAudioPlayer(source, { updateInterval: 500, keepAudioSessionActive: false });
+      
+      // Wait a moment for the player to initialize
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Check if the player loaded successfully
+      if (player.currentStatus && !player.currentStatus.isLoaded) {
+        if (__DEV__) {
+          console.warn(`Sound ${key} may not have loaded properly`);
+        }
+      }
+      
+      this.sounds.set(key, player);
     } catch (error) {
-      console.error(`Error loading sound ${key}:`, error);
+      if (__DEV__) {
+        console.error(`Error loading sound ${key}:`, error);
+      }
+      // Continue without this sound - don't fail the entire initialization
     }
   }
 
   /**
    * Play a specific sound effect
    */
+  /**
+   * Play a sound effect
+   */
   async play(key: string): Promise<void> {
     try {
-      console.log(`Attempting to play sound: ${key}`);
-      console.log('Available sounds:', Array.from(this.sounds.keys()));
-      
-      const sound = this.sounds.get(key);
-      if (!sound) {
-        console.warn(`Sound ${key} not found in loaded sounds`);
+      const player = this.sounds.get(key);
+      if (!player) {
+        // Silently fail if sound not available - don't spam warnings
         return;
       }
 
-      console.log(`Sound ${key} found, playing...`);
+      // Check if player is loaded before trying to play
+      if (!player.currentStatus?.isLoaded) {
+        return;
+      }
+
       // Reset to beginning and play
-      await sound.setPositionAsync(0);
-      await sound.playAsync();
-      console.log(`Sound ${key} played successfully`);
+      await player.seekTo(0);
+      player.play();
     } catch (error) {
-      console.error(`Error playing sound ${key}:`, error);
+      // Silently handle audio errors - they're not critical to app functionality
+      // Only log if it's a development environment
+      if (__DEV__) {
+        console.warn(`Error playing sound ${key}:`, error);
+      }
     }
   }
 
@@ -101,16 +119,15 @@ export class SoundEffects {
    * Play a random FF error sound
    */
   async playRandomFFError(): Promise<void> {
-    console.log('playRandomFFError called');
-    
     if (!this.isInitialized) {
-      console.warn('SoundEffects not initialized yet, initializing now...');
+      if (__DEV__) {
+        console.warn('SoundEffects not initialized yet, initializing now...');
+      }
       await this.initialize();
     }
     
     const errorSounds = ['ff-error-1', 'ff-error-2', 'ff-error-3', 'ff-error-4'];
     const randomSound = errorSounds[Math.floor(Math.random() * errorSounds.length)];
-    console.log('Playing random FF error sound:', randomSound);
     await this.play(randomSound);
   }
 
@@ -138,11 +155,13 @@ export class SoundEffects {
    * Cleanup all loaded sounds
    */
   async cleanup(): Promise<void> {
-    for (const [key, sound] of this.sounds.entries()) {
+    for (const [key, player] of Array.from(this.sounds.entries())) {
       try {
-        await sound.unloadAsync();
+        player.remove();
       } catch (error) {
-        console.error(`Error unloading sound ${key}:`, error);
+        if (__DEV__) {
+          console.error(`Error unloading sound ${key}:`, error);
+        }
       }
     }
     this.sounds.clear();

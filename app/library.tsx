@@ -104,9 +104,11 @@ export default function MixtapeLibraryScreen() {
         // Delete mixtapes with invalid blob URLs (batch operation)
         if (mixtapesToDelete.length > 0) {
           await Promise.all(mixtapesToDelete.map(id => 
-            mixtapeRepo.delete(id).catch(error => 
-              console.error(`Failed to delete mixtape ${id}:`, error)
-            )
+            mixtapeRepo.delete(id).catch(error => {
+              if (__DEV__) {
+                console.error(`Failed to delete mixtape ${id}:`, error);
+              }
+            })
           ));
         }
         
@@ -128,7 +130,9 @@ export default function MixtapeLibraryScreen() {
         setDisplayedMixtapes(allMixtapes.slice(0, loadedCount));
       }
     } catch (error) {
-      console.error('Error loading mixtapes:', error);
+      if (__DEV__) {
+        console.error('Error loading mixtapes:', error);
+      }
       Alert.alert('Error', 'Failed to load mixtapes');
     } finally {
       setIsLoading(false);
@@ -184,7 +188,9 @@ export default function MixtapeLibraryScreen() {
             await audioRepo.deleteAudioFile(track.id);
           } catch (error) {
             // Log but don't fail deletion if audio cleanup fails
-            console.warn(`Failed to delete audio file for track ${track.id}:`, error);
+            if (__DEV__) {
+              console.warn(`Failed to delete audio file for track ${track.id}:`, error);
+            }
           }
         }
       }
@@ -195,7 +201,9 @@ export default function MixtapeLibraryScreen() {
       setShowDeleteModal(false);
       setMixtapeToDelete(null);
     } catch (error) {
-      console.error('Error deleting mixtape:', error);
+      if (__DEV__) {
+        console.error('Error deleting mixtape:', error);
+      }
       Alert.alert('Error', 'Failed to delete mixtape');
     }
   };
@@ -231,7 +239,9 @@ export default function MixtapeLibraryScreen() {
       setImportedMixtape(mixtape);
       setShowEnvelopeAnimation(true);
     } catch (error) {
-      console.error('Error importing from URL:', error);
+      if (__DEV__) {
+        console.error('Error importing from URL:', error);
+      }
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       Alert.alert('Import Failed', errorMessage);
     } finally {
@@ -272,7 +282,9 @@ export default function MixtapeLibraryScreen() {
             setImportedMixtape(mixtape);
             setShowEnvelopeAnimation(true);
           } catch (error) {
-            console.error('Error importing from file:', error);
+            if (__DEV__) {
+              console.error('Error importing from file:', error);
+            }
             const errorMessage = error instanceof Error ? error.message : 'Unknown error';
             Alert.alert('Import Failed', errorMessage);
           } finally {
@@ -322,7 +334,9 @@ export default function MixtapeLibraryScreen() {
           setImportedMixtape(mixtape);
           setShowEnvelopeAnimation(true);
         } catch (error) {
-          console.error('Error importing from file:', error);
+          if (__DEV__) {
+            console.error('Error importing from file:', error);
+          }
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           Alert.alert('Import Failed', errorMessage);
         } finally {
@@ -330,7 +344,9 @@ export default function MixtapeLibraryScreen() {
         }
       }
     } catch (error) {
-      console.error('Error setting up file import:', error);
+      if (__DEV__) {
+        console.error('Error setting up file import:', error);
+      }
       Alert.alert('Error', 'Failed to open file picker');
     }
   };
@@ -398,10 +414,6 @@ export default function MixtapeLibraryScreen() {
               styles.themeColor,
               {
                 backgroundColor: (() => {
-                  // Use custom color if available
-                  if (mixtape.theme.customShellColor) {
-                    return mixtape.theme.customShellColor;
-                  }
                   // Use pattern color if available (this is the shell color)
                   if (mixtape.theme.pattern) {
                     return mixtape.theme.pattern;
@@ -434,10 +446,6 @@ export default function MixtapeLibraryScreen() {
       {/* Actions */}
       <View style={styles.cardActions}>
         <Button
-          title="📤 Share"
-          variant="secondary"
-          size="small"
-          onPress={() => router.push(`/export?id=${mixtape.id}`)}
           title="▶ Play"
           variant="primary"
           size="small"
@@ -895,11 +903,18 @@ const styles = StyleSheet.create({
     backgroundColor: '#7c3aed',
     alignItems: 'center',
     justifyContent: 'center',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    ...Platform.select({
+      web: {
+        boxShadow: '0 4px 8px rgba(0, 0, 0, 0.3)',
+      } as any,
+      default: {
+        elevation: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+    }),
   },
   importFabText: {
     fontSize: 24,

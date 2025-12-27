@@ -4,7 +4,8 @@
  * Requirements: 6.1, 6.2, 10.1, 10.2, 10.3, 10.4
  */
 
-import { Audio, AVPlaybackStatus } from 'expo-av';
+import { createAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import type { AudioPlayer } from 'expo-audio/build/AudioModule.types';
 import { Mixtape, PlaybackState, Track } from '../models';
 import { AudioEffectsManager, PitchShiftManager } from './AudioEffectsManager';
 import { GlitchController } from './GlitchController';
@@ -20,8 +21,8 @@ const OVERHEAT_DECAY_RATE = 2; // Points per second
 const OVERHEAT_COOLDOWN_DURATION = 5000; // 5 seconds in milliseconds
 
 export class PlaybackEngine {
-  private sound: Audio.Sound | null = null;
-  private nextSound: Audio.Sound | null = null; // Preloaded next track
+  private sound: AudioPlayer | null = null;
+  private nextSound: AudioPlayer | null = null; // Preloaded next track
   private mixtape: Mixtape | null = null;
   private state: PlaybackState;
   private stateChangeCallbacks: Set<StateChangeCallback> = new Set();
@@ -47,7 +48,11 @@ export class PlaybackEngine {
     this.startOverheatDecay();
     this.setupGlitchListener();
     // Initialize sound effects
-    SoundEffects.getInstance().initialize().catch(console.error);
+    SoundEffects.getInstance().initialize().catch((error) => {
+      if (__DEV__) {
+        console.error('Error initializing sound effects:', error);
+      }
+    });
   }
 
   /**
@@ -88,11 +93,11 @@ export class PlaybackEngine {
   async load(mixtape: Mixtape): Promise<void> {
     // Unload any existing sound
     if (this.sound) {
-      await this.sound.unloadAsync();
+      this.sound.remove();
       this.sound = null;
     }
     if (this.nextSound) {
-      await this.nextSound.unloadAsync();
+      this.nextSound.remove();
       this.nextSound = null;
     }
 
@@ -128,32 +133,41 @@ export class PlaybackEngine {
     try {
       // Unload previous sound
       if (this.sound) {
-        await this.sound.unloadAsync();
+        await this.sound.remove();
         this.sound = null;
       }
 
-      // Configure audio mode
-      await Audio.setAudioModeAsync({
-        playsInSilentModeIOS: true,
-        staysActiveInBackground: true,
+      // Configure audio mode for background playback and silent mode
+      await setAudioModeAsync({
+        playsInSilentMode: true,
+        shouldPlayInBackground: true,
       });
 
       // Create and load new sound
-      const { sound, status } = await Audio.Sound.createAsync(
-        { uri: track.source.uri },
-        { shouldPlay: false },
-        this.onPlaybackStatusUpdate.bind(this)
-      );
-
-      this.sound = sound;
-
+      this.sound = createAudioPlayer(track.source.uri, { updateInterval: 500, keepAudioSessionActive: false });
+      
+      // Set up event listeners
+      if (this.sound) {
+        this.sound.addListener('playbackStatusUpdate', this.onPlaybackStatusUpdate.bind(this));
+      }
+      
+      // Wait a moment for the player to initialize
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
       // Update duration from loaded status
-      if (status.isLoaded) {
-        this.state.duration = status.durationMillis || 0;
+      const status = this.sound?.currentStatus;
+      if (status?.isLoaded) {
+        this.state.duration = status.duration * 1000; // Convert seconds to milliseconds
+        this.state.position = 0;
+      } else {
+        // If not loaded, set a default duration to prevent errors
+        this.state.duration = 0;
         this.state.position = 0;
       }
     } catch (error) {
-      console.error('Error loading track:', error);
+      if (__DEV__) {
+        console.error('Error loading track:', error);
+      }
       // Skip to next track on error
       await this.skipToNextTrack();
     } finally {
@@ -162,18 +176,18 @@ export class PlaybackEngine {
   }
 
   /**
-   * Handle playback status updates from Expo AV
+   * Handle playback status updates from Expo Audio
    */
-  private onPlaybackStatusUpdate(status: AVPlaybackStatus): void {
+  private onPlaybackStatusUpdate(status: any): void {
     if (!status.isLoaded) {
       return;
     }
 
     const wasPlaying = this.state.isPlaying;
     
-    this.state.position = status.positionMillis || 0;
-    this.state.duration = status.durationMillis || 0;
-    this.state.isPlaying = status.isPlaying;
+    this.state.position = (status.currentTime || 0) * 1000; // Convert seconds to milliseconds
+    this.state.duration = (status.duration || 0) * 1000; // Convert seconds to milliseconds
+    this.state.isPlaying = status.playing;
 
     // Handle track completion
     if (status.didJustFinish) {
@@ -181,7 +195,7 @@ export class PlaybackEngine {
     }
 
     // Notify if playing state changed or position updated significantly
-    if (wasPlaying !== this.state.isPlaying || status.positionMillis) {
+    if (wasPlaying !== this.state.isPlaying || status.currentTime) {
       this.notifyStateChange();
     }
   }
@@ -197,18 +211,19 @@ export class PlaybackEngine {
       try {
         // Unload previous preloaded track if exists
         if (this.nextSound) {
-          await this.nextSound.unloadAsync();
+          await this.nextSound.remove();
           this.nextSound = null;
         }
 
         // Preload next track
-        const { sound } = await Audio.Sound.createAsync(
-          { uri: tracks[nextIndex].source.uri },
-          { shouldPlay: false }
-        );
-        this.nextSound = sound;
+        this.nextSound = createAudioPlayer(tracks[nextIndex].source.uri, { updateInterval: 500, keepAudioSessionActive: false });
+        
+        // Wait a moment for preload to initialize
+        await new Promise(resolve => setTimeout(resolve, 100));
       } catch (error) {
-        console.error('Error preloading next track:', error);
+        if (__DEV__) {
+          console.warn('Error preloading next track:', error);
+        }
         // Don't fail if preloading fails - we'll load it normally when needed
       }
     }
@@ -229,7 +244,7 @@ export class PlaybackEngine {
       if (this.nextSound) {
         // Unload current sound
         if (this.sound) {
-          await this.sound.unloadAsync();
+          await this.sound.remove();
         }
         
         // Use preloaded sound
@@ -237,12 +252,12 @@ export class PlaybackEngine {
         this.nextSound = null;
         
         // Set up status update callback
-        this.sound.setOnPlaybackStatusUpdate(this.onPlaybackStatusUpdate.bind(this));
+        this.sound.addListener('playbackStatusUpdate', this.onPlaybackStatusUpdate.bind(this));
         
         // Update duration
-        const status = await this.sound.getStatusAsync();
+        const status = this.sound.currentStatus;
         if (status.isLoaded) {
-          this.state.duration = status.durationMillis || 0;
+          this.state.duration = status.duration * 1000; // Convert seconds to milliseconds
           this.state.position = 0;
         }
         
@@ -321,7 +336,9 @@ export class PlaybackEngine {
     // Check if we're at the end of the side - if so, restart from beginning
     const tracks = this.getCurrentSideTracks();
     if (tracks.length === 0) {
-      console.error('No tracks available to play');
+      if (__DEV__) {
+        console.error('No tracks available to play');
+      }
       return;
     }
     
@@ -335,11 +352,13 @@ export class PlaybackEngine {
       // Play click sound effect
       await this.audioEffects.playClickSound();
       
-      await this.sound.playAsync();
+      await this.sound.play();
       this.state.isPlaying = true;
       this.notifyStateChange();
     } catch (error) {
-      console.error('Error playing audio:', error);
+      if (__DEV__) {
+        console.error('Error playing audio:', error);
+      }
     }
   }
 
@@ -367,11 +386,13 @@ export class PlaybackEngine {
     }
 
     try {
-      await this.sound.pauseAsync();
+      await this.sound.pause();
       this.state.isPlaying = false;
       this.notifyStateChange();
     } catch (error) {
-      console.error('Error pausing audio:', error);
+      if (__DEV__) {
+        console.error('Error pausing audio:', error);
+      }
     }
   }
 
@@ -386,7 +407,6 @@ export class PlaybackEngine {
 
     // Check if in glitch mode - play error sound and prevent FF
     if (this.state.glitchMode && this.glitchController.isGlitchActive(this.state.glitchMode)) {
-      console.log('FF pressed during glitch mode! Playing error sound...');
       // Play random FF error sound during glitch mode
       await SoundEffects.getInstance().playRandomFFError();
       return;
@@ -426,7 +446,7 @@ export class PlaybackEngine {
       
       // If not playing, start playing
       if (!this.state.isPlaying) {
-        await this.sound.playAsync();
+        await this.sound.play();
         this.state.isPlaying = true;
       }
 
@@ -436,7 +456,9 @@ export class PlaybackEngine {
       // Start gradual speed increase
       this.startFFSpeedIncrease();
     } catch (error) {
-      console.error('Error during fast forward:', error);
+      if (__DEV__) {
+        console.error('Error during fast forward:', error);
+      }
       this.state.isFastForwarding = false;
       this.notifyStateChange();
     }
@@ -466,7 +488,9 @@ export class PlaybackEngine {
         try {
           await PitchShiftManager.applyFastForwardPitch(this.sound, this.ffSpeedMultiplier);
         } catch (error) {
-          console.error('Error increasing FF speed:', error);
+          if (__DEV__) {
+            console.error('Error increasing FF speed:', error);
+          }
         }
       }
     }, 500); // Increase every 500ms
@@ -510,7 +534,9 @@ export class PlaybackEngine {
       await PitchShiftManager.resetPitch(this.sound);
       this.notifyStateChange();
     } catch (error) {
-      console.error('Error stopping fast forward:', error);
+      if (__DEV__) {
+        console.error('Error stopping fast forward:', error);
+      }
     }
   }
 
@@ -571,7 +597,6 @@ export class PlaybackEngine {
 
     // Check if in glitch mode - play rewind error sound and prevent REW
     if (this.state.glitchMode && this.glitchController.isGlitchActive(this.state.glitchMode)) {
-      console.log('REW pressed during glitch mode! Playing rewind error sound...');
       // Play rewind error sound during glitch mode
       await SoundEffects.getInstance().playRewindError();
       return;
@@ -615,7 +640,9 @@ export class PlaybackEngine {
       // Start gradual speed increase
       this.startREWSpeedIncrease();
     } catch (error) {
-      console.error('Error during rewind:', error);
+      if (__DEV__) {
+        console.error('Error during rewind:', error);
+      }
       this.state.isRewinding = false;
       this.notifyStateChange();
     }
@@ -645,7 +672,9 @@ export class PlaybackEngine {
         try {
           await PitchShiftManager.applyRewindPitch(this.sound, this.rewSpeedMultiplier);
         } catch (error) {
-          console.error('Error increasing REW speed:', error);
+          if (__DEV__) {
+            console.error('Error increasing REW speed:', error);
+          }
         }
       }
     }, 500); // Increase every 500ms
@@ -689,7 +718,9 @@ export class PlaybackEngine {
       try {
         await PitchShiftManager.resetPitch(this.sound);
       } catch (error) {
-        console.error('Error resetting pitch after rewind:', error);
+        if (__DEV__) {
+          console.error('Error resetting pitch after rewind:', error);
+        }
       }
     }
 
@@ -735,7 +766,7 @@ export class PlaybackEngine {
           
           // Seek to end of previous track
           if (this.sound && this.state.duration > 0) {
-            await this.sound.setPositionAsync(this.state.duration);
+            await this.sound.seekTo(this.state.duration / 1000); // expo-audio uses seconds
             this.state.position = this.state.duration;
           }
           
@@ -750,11 +781,13 @@ export class PlaybackEngine {
       } else {
         // Seek backwards
         try {
-          await this.sound.setPositionAsync(newPosition);
+          await this.sound.seekTo(newPosition / 1000); // expo-audio uses seconds
           this.state.position = newPosition;
           this.notifyStateChange();
         } catch (error) {
-          console.error('Error seeking during rewind:', error);
+          if (__DEV__) {
+            console.error('Error seeking during rewind:', error);
+          }
         }
       }
     }, rewIntervalMs);
@@ -778,7 +811,7 @@ export class PlaybackEngine {
       // At the beginning of the side, just restart current track
       this.state.position = 0;
       if (this.sound) {
-        await this.sound.setPositionAsync(0);
+        await this.sound.seekTo(0);
       }
       this.notifyStateChange();
     }
@@ -802,7 +835,7 @@ export class PlaybackEngine {
 
     // Step 1: Stop reel animations (pause current playback)
     if (this.sound && this.state.isPlaying) {
-      await this.sound.pauseAsync();
+      await this.sound.pause();
     }
 
     this.state.isPlaying = false;
@@ -855,11 +888,13 @@ export class PlaybackEngine {
     }
 
     try {
-      await this.sound.setPositionAsync(position);
+      await this.sound.seekTo(position / 1000); // expo-audio uses seconds
       this.state.position = position;
       this.notifyStateChange();
     } catch (error) {
-      console.error('Error seeking:', error);
+      if (__DEV__) {
+        console.error('Error seeking:', error);
+      }
     }
   }
 
@@ -892,7 +927,9 @@ export class PlaybackEngine {
       try {
         callback(stateCopy);
       } catch (error) {
-        console.error('Error in state change callback:', error);
+        if (__DEV__) {
+          console.error('Error in state change callback:', error);
+        }
       }
     });
   }
@@ -926,8 +963,11 @@ export class PlaybackEngine {
     
     // Play pause sound if pressed more than 3 times
     if (this.pausePlayPressCount > 3) {
-      console.log('Pause/Play pressed more than 3 times consecutively!');
-      SoundEffects.getInstance().playPause().catch(console.error);
+      SoundEffects.getInstance().playPause().catch((error) => {
+        if (__DEV__) {
+          console.error('Error playing pause sound:', error);
+        }
+      });
       // Reset counter after playing sound
       this.pausePlayPressCount = 0;
     }
@@ -1027,13 +1067,13 @@ export class PlaybackEngine {
     }
 
     if (this.sound) {
-      await this.sound.unloadAsync();
+      await this.sound.remove();
       this.sound = null;
     }
     
     // Clean up preloaded sound
     if (this.nextSound) {
-      await this.nextSound.unloadAsync();
+      await this.nextSound.remove();
       this.nextSound = null;
     }
     
